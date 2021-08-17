@@ -1,0 +1,14 @@
+set +H
+read -r
+
+part='(?:[[:alnum:]]+(?:-[[:alnum:]]+)*)'
+user="(?:${part}(?:\.${part})*)"
+host="(?:${part}(?:\.${part})+)"
+left='(?<![.-])\b'
+right='\b(?![.-])'
+addr="${left}${user}@${host}${right}"
+
+declare -a a
+a=($(grep -oP "$addr" | sort -u))
+
+(IFS=\;; printf '%s\n' "${a[@]}")

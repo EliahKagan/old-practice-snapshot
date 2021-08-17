@@ -1,0 +1,18 @@
+final class Solution {
+    public static void main(final String[] args)
+    {
+        try (final java.util.Scanner sc = new java.util.Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t) {
+                final String w = sc.next();
+                
+                String s = w, r;
+                while ((r = s.replace("100", "")).length() != s.length())
+                    s = r;
+                
+                System.out.println(w.length() - r.length());
+            }
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

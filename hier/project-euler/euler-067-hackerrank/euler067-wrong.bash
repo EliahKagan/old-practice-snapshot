@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -f
+
+declare -i size
+declare -Ai grid
+
+read_row() {
+    local -i row_index="$1" col_index=0 elem
+    local line
+    IFS= read -r line
+    
+    for elem in $line; do
+        ((grid["$row_index $((col_index++))"] = elem))
+    done
+}
+
+read_grid() { # replaces size and grid with new value, read from stdin
+    read -r size
+    grid=()
+    
+    local -i row_index
+    for ((row_index = 0; row_index < size; ++row_index)); do
+        read_row "$row_index"
+    done
+}
+
+tabulate_row() {
+    local -i row_index="$1" prev_row_index="$((row_index - 1))"
+    
+    # accumulate the only available "choices" into the two edge cells
+    ((grid["$row_index 0"] = grid["$prev_row_index 0"]))
+    ((grid["$row_index $row_index"] = grid["$prev_row_index $prev_row_index"]))
+    
+    # accumulate the best of the two real choices into all non-edge cells
+    local -i col_index left right
+    for ((col_index = 1; col_index < row_index; ++col_index)); do
+        ((left = grid["$prev_row_index $((col_index - 1))"]))
+        ((right = grid["$prev_row_index $col_index"]))
+        ((grid["$row_index $col_index"] = (left > right : left : right)))
+    done
+}
+
+tabulate_grid() {
+    local -i row_index
+    for ((row_index = 1; row_index < n; ++row_index)); do
+        tabulate_row "$row_index"
+    done
+}
+
+print_best() {
+    local -i best=0 cur row_index="$((size - 1))" col_index
+    
+    for ((col_index = 0; col_index <= row_index; ++col_index)); do
+        ((cur = grid["$row_index $col_index"]))
+        ((best < cur)) || ((best = cur))
+    done
+    
+    printf '%d\n' "$best"
+}
+
+declare -i t=0
+read -r t
+
+while ((t-- > 0)); do
+    read_grid
+    tabulate_grid
+    print_best
+done

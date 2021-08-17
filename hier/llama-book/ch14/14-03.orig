@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Const::Fast;
+use English qw(-no_match_vars);
+
+const my $NEED_ARGS => 2;
+const my $NO_MATCH => -1;
+
+if (scalar @ARGV != $NEED_ARGS) {
+    my $adjective = (scalar @ARGV < $NEED_ARGS ? 'few' : 'many');
+    die "$PROGRAM_NAME: error: too $adjective arguments\n";
+}
+
+my ($text, $pattern) = @ARGV;
+
+my $i = $NO_MATCH;
+while (($i = index $text, $pattern, $i + 1) != $NO_MATCH) { print "$i\n" }

@@ -1,0 +1,74 @@
+#ifdef _MSC_VER
+#define NOMINMAX
+#endif
+
+#include <cstdint>
+#include <cstdio>
+#include <limits>
+#include <vector>
+
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
+namespace {
+    class BitSet {
+    public:
+        explicit BitSet(std::size_t capacity, bool fill = false);
+
+        explicit operator std::vector<std::size_t>() const;
+
+        std::size_t capacity() const { return bits_.size() * 64u; }
+
+        bool contains(const std::size_t value) const
+        {
+            return bits_[value >> 6u] & one << (value & 63u);
+        }
+
+        void insert(const std::size_t value)
+        {
+            bits_[value >> 6u] |= one << (value & 63u);
+        }
+
+        void erase(const std::size_t value)
+        {
+            bits_[value >> 6u] &= ~(one << (value & 63u));
+        }
+
+    private:
+        static constexpr auto zero = static_cast<std::uint64_t>(0);
+        static constexpr auto one = static_cast<std::uint64_t>(1);
+        static constexpr auto max = std::numeric_limits<std::uint64_t>::max();
+
+        static std::size_t length_for(const std::size_t capacity)
+        {
+            auto length = capacity / 64u;
+            if (capacity % 64u != 0) ++length;
+            return length;
+        }
+
+        std::vector<std::uint64_t> bits_;
+    };
+
+    BitSet::BitSet(const std::size_t capacity, const bool fill)
+        : bits_{length_for(capacity), (fill ? max : zero)}
+    {
+        if (fill) {
+            const auto tail = capacity % 64u;
+            if (tail != 0u) bits_.back() >>= 64u - tail;
+        }
+    }
+
+    BitSet::operator std::vector<std::size_t>() const
+    {
+
+    }
+}
+
+int main()
+{
+    //
+}

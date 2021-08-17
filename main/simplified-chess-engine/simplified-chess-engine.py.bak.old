@@ -1,0 +1,155 @@
+#!/usr/bin/env pypy3
+
+import itertools
+
+# files (in the sense of "rank and file") will be input alphabetically
+ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+assert all(ord(ALPHABET[i]) - ord(ALPHABET[0]) == i
+           for i in range(len(ALPHABET)))
+
+WHITE = 0
+BLACK = 1
+
+def opponent(player):
+    return ~player
+
+assert(opponent(WHITE) == BLACK and opponent(BLACK) == WHITE)
+
+QUEEN = 0
+KNIGHT = 1
+BISHOP = 2
+ROOK = 3
+
+SYMBOLS = 'QNBR'
+NTYPES = len(SYMBOLS)
+EMPTY = 0
+OBJECT_RANGES = (range(1, 1 + NTYPES), range(1 + NTYPES, 1 + NTYPES * 2))
+
+assert SYMBOLS[QUEEN] == 'Q'
+assert SYMBOLS[KNIGHT] == 'N'
+assert SYMBOLS[BISHOP] == 'B'
+assert SYMBOLS[ROOK] == 'R'
+
+assert EMPTY < OBJECT_RANGES[WHITE].start
+assert OBJECT_RANGES[WHITE].stop <= OBJECT_RANGES[BLACK].start
+
+def get_move_step_bundles():
+    '''Gets the directions pieces can move in. Knights and kings change their
+    positions by exactly these deltas. Other chessmen, besides pawns, change
+    their positions by any positive multiple of them. That distinction is not
+    covered here. Pawn behavior cannot be described in this way at all.'''
+    # A knight in chess is mathematically a knight(a, b), where:
+    a = 1
+    b = 2
+
+    steps = [None] * NTYPES
+
+    steps[ROOK] = ((0, -1), (0, 1), (-1, 0), (1, 0))
+    steps[BISHOP] = ((-1, -1), (-1, 1), (1, -1), (1, 1))
+    steps[KNIGHT] = ((-a, -b), (-a, b), (a, -b), (a, b))
+    steps[QUEEN] = steps[ROOK] + steps[BISHOP]
+
+    assert None not in steps
+    return tuple(steps)
+
+MOVE_STEP_BUNDLES = get_move_step_bundles()
+
+# This simulation has no kings (nor pawns, but they wouldn't be covered here).
+WALKS_MULTIPLE_STEPS = tuple(piece != KNIGHT for piece in range(NTYPES))
+
+def get_directional_move_generator(step, multistep):
+    di, dj = step
+    if multistep:
+        return lambda: zip(itertools.count(di, di), itertools.count(dj, dj))
+    else:
+        return lambda: ((di, dj),)
+
+def get_move_generators(piece):
+    multistep = WALKS_MULTIPLE_STEPS[piece]
+    return tuple(get_directional_move_generator(step, multistep)
+                 for step in MOVE_STEP_BUNDLES[piece])
+
+MOVE_GENERATOR_BUNDLES = tuple(get_move_generators(piece)
+                               for piece in range(NTYPES))
+
+BOARD_SIZE = 4
+
+def on_board(i, j):
+    return 0 <= i < BOARD_SIZE and 0 <= j < BOARD_SIZE
+
+# Constants for reading textual board representations.
+ROW_OFFSET = 1                  # for each rank there shall be a row
+COL_OFFSET = ord(ALPHABET[0])   # for each file there shall be a column
+
+def get_empty_row():
+    return [EMPTY] * BOARD_SIZE
+
+def get_empty_board():
+    return [get_empty_row() for _ in range(BOARD_SIZE)]
+
+def as_object(character):
+    try:
+        return SYMBOLS.index(character)
+    except ValueError as e:
+        raise ValueError('unknown chessman type "%s"' % character) from e
+
+def add_object(board, i, j, player, obj):
+    # Specially catch and rethrow just for the errors that are likely to result
+    # from mistaken input or implementation bugs.
+    if not (0 <= i < BOARD_SIZE and 0 <= j < BOARD_SIZE):
+        raise IndexError('nonexistent board position')
+    if board[i][j] != EMPTY:
+        raise ValueError('board position already occupied')
+
+    board[i][j] = OBJECT_RANGES[player].start + obj
+
+def read_initial_board(*counts): # call with (white_count, black_count)
+    board = get_empty_board()
+
+    for player in WHITE, BLACK:
+        for _ in range(counts[PLAYER]):
+            piece_type, piece_file, piece_rank = input().split()
+            i = int(piece_rank) - ROW_OFFSET
+            j = ord(piece_file) - COL_OFFSET
+            add_object(board, i, j, player, as_object(piece_type))
+
+    return board
+
+def read_positive_record():
+    record = list(map(int, input().split()))
+    if any(value <= 0 for value in record):
+        raise ValueError('unexpected nonpositive value')
+    return record
+
+def scan_moves(board, player, piece, i, j): # would work for anything but pawns
+    for gen in MOVE_GENERATOR_BUNDLES[piece]:
+        for ii, jj in ((i + di, j + dj) for di, dj in gen()):
+            # Stop before we hit the board's edge or another of our own pieces.
+            if not on_board(ii, jj) or board[ii][jj] in OBJECT_RANGES[player]:
+                break
+
+            yield ii, jj
+
+            if board[ii][jj] != empty:
+                break # Stop after capturing one of our opponent's pieces.
+
+for _ in range(int(input())):
+    white_count, black_count, moves_remaining = read_positive_record()
+    board = read_initial_board(white_count, black_count)
+    protagonist = WHITE
+
+    def can_win(turn_player):
+        '''Determines if the player held in the protagonist variable can win.
+        Pass the _current_ player as the value of the turn_player parameter.'''
+        if moves_remaining == 0:
+            return False
+        moves_remaining -= 1
+
+        for i in range(BOARD_SIZE):
+            for j in range(BOARD_SIZE):
+                pass # FIXME: do stuff!
+
+        moves_remaining += 1
+        return False
+
+    print('YES' if can_win else 'NO')

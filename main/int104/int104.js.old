@@ -1,0 +1,23 @@
+'use strict';
+
+const BASE = 10, LOW_WIDTH = 32, LOW_MASK = (1 << 32) - 1;
+
+function Int64(digits) {
+    let lo = 0, hi = 0;
+
+    for (const c of digits) {
+        lo = lo * BASE + Number(c);
+        hi = hi * BASE + (lo >> LOW_WIDTH);
+        lo &= LOW_MASK;
+    }
+    
+    return { lo, hi };
+}
+
+function half(i64) {
+    return { lo: i64[lo] << 1, hi: i64[hi] << 1 };
+}
+
+console.log(Int64('10000000000'));
+//const p = Int64('10000000000');
+//console.log(`lo=${p[lo]}, hi=${p[lo]}`);

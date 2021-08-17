@@ -1,0 +1,42 @@
+final class Solution {
+    private static int markFibonacci(final boolean[] range) // returns count
+    {
+        int count = 0, a = 0, b = 1;
+        
+        do {
+            ++count;
+            range[a] = true;
+            
+            final int tmp = a;
+            a = b;
+            b += tmp;
+        }
+        while (b <= range.length);
+        
+        return count;
+    }
+    
+    private static int[] getNonFibonacci(final int bound)
+    {
+        final boolean[] range = new boolean[bound + 1];
+        final int[] seq = new int[range.length - markFibonacci(range) + 1];
+        
+        for (int j = 0, i = 0; i != range.length; ++i)
+            if (!range[i]) seq[j++] = i;
+        
+        return seq;
+    }
+    
+    public static void main(final String[] args)
+    {
+        final int nmax = 100_000;
+        final int[] seq = getNonFibonacci(nmax);
+        
+        try (final java.util.Scanner sc = new java.util.Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t)
+                System.out.println(seq[sc.nextInt()] - 1);
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

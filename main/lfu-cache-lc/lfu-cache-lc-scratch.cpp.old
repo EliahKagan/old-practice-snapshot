@@ -1,0 +1,82 @@
+#include <cassert>
+#include <cstddef>
+#include <list>
+#include <stdexcept>
+#include <unordered_map>
+
+class LFUCache {
+public:
+    explicit LFUCache(int capacity);
+
+    LFUCache(const LFUCache&) = delete;
+    LFUCache(LFUCache&&) = default;
+    LFUCache& operator=(const LFUCache&) = delete;
+    LFUCache& operator=(LFUCache&&) = default;
+    ~LFUCache() = default;
+
+    int get(int key);
+
+    void put(int key, int value);
+
+private:
+    struct Entry {
+        // Allows Entry objects to be emplaced.
+        constexpr Entry(int key, int value) noexcept;
+
+        int key, value;
+    };
+
+    struct Group {
+        constexpr Group(std::size_t initial_frequency) noexcept;
+
+        std::list<Entry> entries;
+        std::size_t frequency;
+    };
+
+    struct Pos {
+        // Allows Pos objects to be emplaced.
+        constexpr Pos(std::list<Group>::iterator group,
+                      std::list<Entry>::iterator entry) noexcept;
+
+        std::list<Group>::iterator group;
+        std::list<Entry>::iterator entry;
+    };
+
+    static constexpr auto not_found = -1;
+
+
+
+    std::unordered_map<int, Pos> map_;
+
+    std::list<Group> groups_;
+
+    int vacancy_;
+};
+
+LFUCache::LFUCache(const int capacity) : vacancy_{capacity}
+{
+    if (capacity < 0) throw std::out_of_range{"negative capacity not allowed"};
+}
+
+int LFUCache::get(const int key)
+{
+
+}
+
+void LFUCache::put(const int key, const int value)
+{
+
+}
+
+constexpr LFUCache::Entry::Entry(const int key, const int value) noexcept
+        : key{key}, value{value}
+{
+}
+
+constexpr LFUCache::Pos::Pos(std::list<Group>::iterator group,
+                             std::list<Entry>::iterator entry) noexcept
+        : group{group}, entry{entry}
+{
+}
+
+constexpr int LFUCache::not_found;

@@ -1,0 +1,110 @@
+'use strict';
+
+const fs = require('fs');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', function(inputStdin) {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', function() {
+    inputString = inputString.split('\n');
+
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+function readRecord() {
+    return readLine().split(/\s+/).filter(tok => tok).map(Number);
+}
+
+class Edge {
+    constructor(u, v, weight) {
+        this.u = u;
+        this.v = v;
+        this.weight = weight;
+    }
+}
+
+function readEdges(edgeCount) {
+    const edges = [];
+    while (edgeCount-- > 0) {
+        edges.push(new Edge(...readRecord()));
+    }
+    return edges;
+}
+
+class DisjointSets {
+    // Performs elementCount makeset operations.
+    constructor(elementCount) {
+        this._parents = new Array(elementCount);
+        for (let elem = 0; elem < elementCount; ++elem) {
+            this._parents[elem] = elem;
+        }
+
+        this._ranks = new Array(elementCount);
+        this._ranks.fill(0);
+    }
+
+    // Union by rank with full path compression.
+    // Returns true if the sets started out separate, false otherwise.
+    union(elem1, elem2) {
+        // Find the ancestors and stop if they are the same.
+        elem1 = this._findSet(elem1);
+        elem2 = this._findSet(elem2);
+        if (elem1 === elem2) return false;
+
+        // Unite by rank.
+        if (this._ranks[elem1] < this._ranks[elem2]) {
+            this._parents[elem1] = elem2;
+        } else {
+            if (this._ranks[elem1] === this._ranks[elem2]) {
+                ++this._ranks[elem1];
+            }
+            this._parents[elem2] = elem1;
+        }
+
+        return true;
+    }
+
+    _findSet(elem) {
+        // Find the ancestor.
+        let leader = elem;
+        while (leader !== this._parents[leader]) {
+            leader = this._parents[leader];
+        }
+
+        // Compress the path.
+        while (elem !== leader) {
+            const parent = this._parents[elem];
+            this._parents[elem] = leader;
+            elem = parent;
+        }
+
+        return leader;
+    }
+}
+
+function main() {
+    const [vertexCount, edgeCount] = readRecord();
+    const edges = readEdges(edgeCount);
+    edges.sort((lhs, rhs) => lhs.weight - rhs.weight);
+    const sets = new DisjointSets(vertexCount + 1); // +1 for 1-based indexing
+
+    let totalWeight = 0;
+    for (const edge of edges) {
+        if (sets.union(edge.u, edge.v)) {
+            totalWeight += edge.weight;
+        }
+    }
+
+    console.log(totalWeight);
+}

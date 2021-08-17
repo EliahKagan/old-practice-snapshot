@@ -1,0 +1,43 @@
+using System;
+using System.Text.RegularExpressions;
+
+internal static class Solution {
+    // This program matches text that looks like it is a web link containing
+    // a possibly valid Internet domain name, without checking the surrounding
+    // context to ensure it (i.e., the <a> tag with href attribute) isn't
+    // quoted. This risks false positives, but I think that's better than the
+    // false negatives that would arise from HTML employing unanticipated
+    // constructs (or that is malformed). Regexes really aren't good for HTML.
+    private static readonly Regex LinkTagRegex;
+
+    static Solution()
+    {
+        // web URL, up to the end of the domain name
+        const string protocol = @"https?(:|%3A)(/|%2F){2}";
+        const string prefix = @"(www?\d*+\.)?+";
+        const string domain = @"(?<domain>[\w-]+(.[\w-]++)++)";
+        const string urlroot = protocol + prefix + domain;
+
+        // href attribute, with quoted URL as value
+        const string dq = @"""", sq = @"'";
+        const string urlvalue_dq = @"(" + dq + urlroot + @"[^""]*" + dq + @")";
+        const string urlvalue_sq = @"(" + sq + urlroot + @"[^']*" + sq + @")";
+        const string urlvalue = @"(" + urlvalue_dq + @"|" + urlvalue_sq + @")";
+        const string href = @"\s+href=" + urlvalue;
+
+        // other attributes
+        const string value_dq = @"(" + dq + @"[^""]" + dq + @")";
+        const string value_sq = @"(" + sq + @"[^']" + sq + @")";
+        const string value = @"(" + value_dq + @"|" + value_sq + @")";
+        const string attrs = @"(\s+(?!href=)[a-z][a-z\d]*(=" + value + @")?)*";
+
+        // regex to attempt to match hyperlinks and scrape their domains
+        const string pattern = @"(?in)<a" + attrs + href + attrs + @"\s*>";
+        LinkTagRegex = new Regex(pattern, RegexOptions.Compiled);
+    }
+
+    private static void Main()
+    {
+        //
+    }
+}

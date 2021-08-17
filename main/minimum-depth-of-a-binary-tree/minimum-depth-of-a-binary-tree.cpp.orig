@@ -1,0 +1,26 @@
+/* The Node structure is
+struct Node
+{
+    int data;
+    Node* left;
+    Node* right;
+}; */
+
+/*You are required to complete this method*/
+int minDepth(Node* root)
+{
+    queue<Node*> q;
+    q.push(root);
+    
+    for (auto depth = 0; ; ++depth) {
+        for (auto width = q.size(); width != 0u; --width) {
+            root = q.front();
+            q.pop();
+            
+            if (root == nullptr) return depth;
+            
+            q.push(root->left);
+            q.push(root->right);
+        }
+    }
+}

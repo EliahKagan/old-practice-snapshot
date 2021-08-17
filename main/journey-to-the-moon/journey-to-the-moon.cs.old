@@ -1,0 +1,100 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+
+internal static class Graph {
+    private static void Get(out int first, out int second)
+    {
+        var tok = Console.ReadLine().Split();
+
+        first = int.Parse(tok[0]);
+        second = int.Parse(tok[1]);
+    }
+
+    private static void
+    AddAdjacentNode(this Dictionary<int, List<int>> graph, int i, int j)
+    {
+        List<int> adj;
+        if (!graph.TryGetValue(i, out adj))
+            graph.Add(i, adj = new List<int>());
+
+        adj.Add(j);
+    }
+
+    private static void
+    AddEdge(this Dictionary<int, List<int>> graph, int i, int j)
+    {
+        graph.AddAdjacentNode(i, j);
+        graph.AddAdjacentNode(j, i);
+    }
+
+    internal static Dictionary<int, List<int>> ReadGraph(out int n)
+    {
+        int p;
+        Get(out n, out p);
+        var graph = new Dictionary<int, List<int>>(n);
+
+        for (int i, j; p > 0; --p) {
+            Get(out i, out j);
+            graph.AddEdge(i, j);
+        }
+
+        return graph;
+    }
+}
+
+internal static class Search {
+    private static long  // removes a disjoint set; returns its cardinality
+    DepthFirstSearch(this Dictionary<int, List<int>> graph, int i)
+    {
+        var c = 0;
+        var s = new Stack<int>();
+
+        for (s.Push(i); s.Count != 0; ++c) {
+            i = s.Pop();
+
+            foreach (var j in graph[i])
+                if (graph.ContainsKey(j)) s.Push(j);
+
+            graph.Remove(i);
+        }
+
+        return c;
+    }
+
+    private static IEnumerable<long> // removes each disjoint set from graph
+    GetDisjointCardinalities(Dictionary<int, List<int>> graph)
+    {
+        while (graph.Count != 0)
+            yield return graph.DepthFirstSearch(graph.First().Key);
+    }
+
+    internal static long
+    CountChoices(this Dictionary<int, List<int>> graph, int n)
+    {
+        var sum = 0L;
+        var choices = 0L;
+
+        // count non-singleton choices
+        foreach (var c in GetDisjointCardinalities(graph)) {
+            choices += sum * c;
+            sum += c;
+        }
+
+        // count singleton choices
+        var k = n - sum;
+        Trace.Assert(k >= 0L);
+        return choices + sum * k + k * (k - 1L) / 2L;
+    }
+}
+
+internal static class Solution {
+    private static void Main()
+    {
+        int n;
+        Console.WriteLine(Graph.ReadGraph(out n).CountChoices(n));
+    }
+}

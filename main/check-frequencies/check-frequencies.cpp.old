@@ -1,0 +1,28 @@
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <iterator>
+#include <string>
+
+namespace {
+    bool check_frequencies(const std::string& s)
+    {
+        std::array<int, 26u> a {};
+        for (const auto c : s) ++a[static_cast<std::size_t>(c - 'a')];
+        std::sort(std::begin(a), std::end(a));
+        
+        std::size_t i {0u};
+        while (i != a.size() && a[i] == 0) ++i;
+        return i == a.size() || a.back() - a[i] <= 1;
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        std::string s;
+        std::cin >> s;
+        std::cout << check_frequencies(s) << '\n';
+    }
+}

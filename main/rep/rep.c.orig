@@ -1,0 +1,165 @@
+// rep.c - repeat a string several (perhaps many) times
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS // for strerror()
+#define noreturn __declspec(noreturn) // Microsoft headers lack <stdnoreturn.h>
+#else
+#include <stdnoreturn.h>
+#endif
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#if defined(__GNUC__) || defined(__clang__)
+#define ATTRIBUTE(x) __attribute__ (x)
+#else
+#define ATTRIBUTE(x)
+#endif
+
+typedef enum tagStatus {
+    kStatusGood,
+    kStatusBadIO,
+    kStatusBadArgs
+} Status;
+
+static const char *g_progname = "";
+
+ATTRIBUTE ((format(printf, 2, 3)))
+static noreturn void die(const Status s, const char *restrict const fmt, ...)
+{
+    assert((s == kStatusGood) == (fmt == NULL));
+
+    if (s != kStatusGood) {
+        fprintf(stderr, "%s: error: ", g_progname);
+
+        va_list v;
+        va_start(v, fmt);
+        vfprintf(stderr, fmt, v);
+        va_end(v);
+
+        putc('\n', stderr);
+    }
+
+    exit(s);
+}
+
+#define ARG_DIE(...) die(kStatusBadArgs, __VA_ARGS__)
+
+ATTRIBUTE ((nonnull))
+static char *skip_whitespace(char *str)
+{
+    while (isspace((unsigned char)*str)) ++str;
+    return str;
+}
+
+ATTRIBUTE ((nonnull))
+static char *rtrim(char *str) // trims whitespace from the end of str
+{
+    char *p = strchr(str, '\0');
+    while (p > str && isspace((unsigned char)p[-1])) --p;
+    *p = '\0';
+    return str;
+}
+
+ATTRIBUTE ((nonnull))  // returns count arg, sets *strp to string-to-repeat arg
+static char *read_args(int argc, char *argv[], char **const strp)
+{
+    if (argc > 0) g_progname = argv[0];
+    --argc, ++argv;
+    
+    if (argc != 2) {
+        if (argc < 1)
+            ARG_DIE("got 0 args (need 2: count, and string to repeat)");
+        
+        if (argc == 1) ARG_DIE("got 1 arg, need 2nd (for string to repeat)");
+        
+        ARG_DIE("got %d args (need just 2: count, and string to repeat", argc);
+    }
+
+    *strp = argv[1];
+    return argv[0];
+}
+
+ATTRIBUTE ((nonnull))
+static noreturn void die_nonnumeric(const char *arg)
+{
+    ARG_DIE("count \"%s\" is not a number", arg);
+}
+
+ATTRIBUTE ((nonnull))   // validates that arg has no non-whitespace after end
+static void check_extraneous(char *arg, char *end)
+{
+    assert(arg <= end);
+    char *new_end = skip_whitespace(end);
+    if (*new_end == '\0') return;
+    
+    ptrdiff_t len = (end >= arg ? end - arg : 0);
+    if (len > INT_MAX) len = INT_MAX;
+    
+    if (len == 0) die_nonnumeric(arg);
+    
+    ARG_DIE("\"%.*s\" looks like a number, but what's \"%s\"?",
+            (int)len, arg, rtrim(new_end));
+}
+
+ATTRIBUTE ((nonnull))
+static bool plausible_zero(const char *expr)
+{
+    if (*expr == '+' || *expr == '-') ++expr;
+    if (*expr != '0') return false;
+    
+    if (*++expr == 'x' || *expr == 'X') {
+        if (*++expr != '0') return false;
+        ++expr;
+    }
+    
+    for (; *expr != '\0'; ++expr)
+        if (*expr != '0') return false;
+    
+    return true;
+}
+
+ATTRIBUTE ((nonnull))
+static long long parse_count(char *arg)
+{
+    arg = skip_whitespace(arg);
+    
+    errno = 0;
+    char *end = NULL;
+    long long count = strtoll(arg, &end, 0);
+    const int e = errno;
+    
+    check_extraneous(arg, end);
+    *end = '\0'; // trim str's trailing whitespace
+    if (count < 0LL) ARG_DIE("negative count \"%s\" not allowed", arg);
+    if (e == ERANGE) ARG_DIE("count \"%s\" > %lld (max)", arg, LLONG_MAX);
+    if (count == 0LL && !plausible_zero(arg)) die_nonnumeric(arg);
+    
+    return count;
+}
+
+int main(int argc, char *argv[])
+{
+    char *a = NULL;
+    long long n = parse_count(read_args(argc, argv, &a));
+    
+    for (; n != 0LL; --n) {
+        errno = 0;
+        if (fputs(a, stdout) < 0) break;
+    }
+    
+    if (n == 0LL) {
+        errno = 0;
+        if (fflush(stdout) == 0) die(kStatusGood, NULL);
+    }
+    
+    die(kStatusBadIO, "write failed: %s", strerror(errno));
+}

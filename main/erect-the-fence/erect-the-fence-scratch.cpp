@@ -1,0 +1,157 @@
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <deque>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <tuple>
+#include <vector>
+
+using namespace std;
+
+struct Point {
+    int x;
+    int y;
+    Point() : x(0), y(0) {}
+    Point(int a, int b) : x(a), y(b) {}
+};
+
+class Solution {
+public:
+    static vector<Point> outerTrees(const vector<Point>& points);
+};
+
+namespace {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
+    const auto k_tau = acos(-1.0) * 2.0;
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+    // The angle between (99, 100) and (100, 100) is ~0.005 radians, so this is
+    // sufficiently small to distinguish any distinct angles that will arise.
+    constexpr auto k_epsilon = 0.0001;
+
+    // Finds any point in the leftmost column.
+    size_t arbitrary_leftmost(const vector<Point>& points) noexcept
+    {
+        const auto min_x = [](const Point& lhs, const Point& rhs) noexcept {
+            return lhs.x < rhs.x;
+        };
+
+        const auto first = cbegin(points), last = cend(points);
+        const auto it = min_element(first, last, min_x);
+        assert(it != last);
+        return static_cast<size_t>(it - first);
+    }
+
+    // Computes the angle of the arrow from tail to head, clockwise from north.
+    // A negative angle may be returned, to be interpreted as counterclockwise.
+    inline double angle(const Point& tail, const Point& head) noexcept
+    {
+        return atan2(head.x - tail.x, head.y - tail.y);
+    }
+
+    // Gets the nonnegative angle from from_angle to to_angle.
+    // Rounds down to zero if the angle is smaller than the error margin.
+    inline double angle_between(const double from_angle,
+                                const double to_angle) noexcept
+    {
+        const auto delta = to_angle - from_angle;
+        if (fabs(delta) <= k_epsilon) return 0.0;
+        if (delta < 0.0) return delta + k_tau;
+        return delta;
+    }
+
+    // Computes the taxicab (Manhattan) metric distance between two points.
+    // When candidates for the next clockwise point in a convex hull are
+    // collinear in the same direction, the closest of them must be selected.
+    // Because they are all in a line, comparisons in the simpler taxicab metric
+    // produce the same ordering as those in the Euclidean (Pythagorean) metric.
+    inline int taxicab(const Point& a, const Point& b) noexcept
+    {
+        return abs(a.x - b.x) + abs(a.y - b.y);
+    }
+
+    // Finds the next clockwise point in the convex hull, where origin is the
+    // current point and bias is the angle that was traveled in to get there.
+    tuple<size_t, double>
+    find_next(const vector<Point>& points, const deque<bool>& vis,
+              const Point& origin, const double bias) noexcept
+    {
+        const auto size = points.size();
+
+        auto best = std::numeric_limits<size_t>::max();
+        auto best_theta = std::numeric_limits<double>::quiet_NaN();
+        auto best_delta = std::numeric_limits<double>::infinity();
+
+        for (size_t i {0u}; i != size; ++i) {
+            if (vis[i]) continue;
+
+            const auto theta = angle(origin, points[i]);
+            const auto delta = angle_between(bias, theta);
+
+            if (abs(delta - best_delta) <= k_epsilon
+                    ? taxicab(origin, points[i]) < taxicab(origin, points[best])
+                    : delta < best_delta) {
+                best = i;
+                best_theta = theta;
+                best_delta = delta;
+            }
+        }
+
+        assert(best != std::numeric_limits<size_t>::max());
+        return make_tuple(best, best_theta);
+    }
+}
+
+vector<Point> Solution::outerTrees(const vector<Point>& points)
+{
+    const auto start = arbitrary_leftmost(points);
+    vector<Point> hull;
+    hull.push_back(points[start]);
+    if (points.size() == 1u) return hull;
+
+    deque<bool> vis (points.size());
+    vis[start] = true;
+
+    size_t cur {};
+    double ang {};
+    tie(cur, ang) = find_next(points, vis, points[start], ang);
+    vis[start] = false;
+
+    do {
+        vis[cur] = true;
+        hull.push_back(points[cur]);
+        tie(cur, ang) = find_next(points, vis, points[cur], ang);
+    }
+    while (cur != start);
+
+    return hull;
+}
+
+namespace {
+    void test(const vector<Point>& points)
+    {
+        const auto hull = Solution::outerTrees(points);
+
+        for (const auto& point : hull)
+            cout << point.x << ' ' << point.y << '\n';
+        
+        cout << '\n';
+    }
+}
+
+int main()
+{
+    test({{1,1}, {2,2}, {2,0}, {2,4}, {3,3}, {4,2}});
+
+    test({{1,2}, {2,2}, {4,2}});
+
+    test({{2,6}, {5,4}, {2,4}, {8,7}, {5,7}, {3,11}, {6,10}, {4,6}, {4,16},
+          {5,11}, {7,7}, {7,9}, {4,9}, {3,8}, {6,5}});
+}

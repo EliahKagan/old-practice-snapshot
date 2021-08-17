@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+
+def read_record():
+    return map(int, input().split())
+
+def get_frequencies_mod(values, k):
+    counts = [0] * k
+    for x in values:
+        counts[x % k] += 1
+    return counts
+
+def compute_best_cardinality(values, k):
+    '''Size of largest set of values without partial sums divisible by k.'''
+    counts = get_frequencies_mod(values, k)
+    cardinality = 0
+
+    i = 1
+    j = k - 1
+
+    # include the larger of each complementary pair of subsets
+    while i < j:
+        cardinality += max(counts[i], counts[j])
+        i += 1
+        j -= 1
+
+    # the 0 and k / 2 self-complements contribute at most one value each
+    if i == j and counts[i] != 0:
+        cardinality += 1
+    if counts[0] != 0:
+        cardinality += 1
+
+    return cardinality
+
+_, k = read_record() # don't need n
+print(compute_best_cardinality(read_record(), k))

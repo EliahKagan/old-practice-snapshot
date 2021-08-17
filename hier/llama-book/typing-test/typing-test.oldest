@@ -1,0 +1,57 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+use Readonly;
+
+sub regular_pluralize {
+    my ($number, $word) = @_;
+    return sprintf '%d %s%s', $number, $word, ($number == 1 ? q{} : q{s});
+}
+
+sub load_words {
+    my $path = shift;
+    my @words;
+
+    open my $in, '<', $path;
+    while (<$in>) {
+        if (m{^([[:lower:]]+)   # an all-lowercase word
+                (?:/|$)}ax) {   # possibly followed by Hunspell metadata
+            push @words, $1;
+        }
+    }
+    close $in;
+
+    return @words;
+}
+
+Readonly my @words => load_words '/usr/share/hunspell/en_US.dic';
+Readonly my $count => scalar @words;
+Readonly my $NREPS => 10;
+
+my %history;
+my $errors = 0;
+Readonly my $start => time;
+
+for my $i (1 .. $NREPS) {
+    Readonly my $word => $words[int rand $count];
+    if (exists $history{$word}) { redo }
+    $history{$word} = 1;
+
+    print "Type the word \"$word\":  ";
+    (my $try = <STDIN>) =~ s/\s//g;
+
+    if ($try ne $word) {
+        print "Sorry, that's not right!\n";
+        ++$errors;
+        redo;
+    }
+}
+
+Readonly my $end => time;
+
+printf "You've completed the test, with %s, in %s.\n",
+       regular_pluralize($errors, 'error'),
+       regular_pluralize($end - $start, 'second');

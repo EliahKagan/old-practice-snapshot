@@ -1,0 +1,133 @@
+#include <cstddef>
+#include <vector>
+
+namespace {
+    using std::size_t;
+
+    class DisjointPlayerSets {
+    public:
+        // @param player_games  player -> game
+        explicit DisjointPlayerSets(const std::vector<unsigned>& player_games,
+                                    unsigned game_count);
+
+        // joins the players' sublans if they are not already joined
+        void connect(size_t player1, size_t player2);
+
+    private:
+        struct Contribution {
+            unsigned game, population;
+
+            // Makes emplace_back() work.
+            constexpr Contribution(unsigned game, unsigned population) noexcept;
+
+            constexpr Contribution() noexcept;
+        };
+
+        // finds the leader of the player's connected sublan
+        size_t find_set(size_t player) noexcept;
+
+        // merges the population contributions from two sublans
+        void merge_contribs(size_t dest, size_t src);
+
+        // extra space for merging contribs_ rows during a DSU union operation
+        std::vector<Contribution> aux_;
+
+        // set leader -> (game -> population)
+        std::vector<std::vector<Contribution>> contribs_;
+
+        // player -> nonnegatve DSU parent, or negative DSU rank if set leader
+        std::vector<int> parents_or_ranks_;
+
+        // game -> negative population target, or nonneg start time if started
+        std::vector<int> pop_targets_or_start_times_;
+
+        // current time
+        int time_ {0};
+    };
+
+    DisjointPlayerSets(const std::vector<unsigned>& player_games,
+                       const unsigned game_count)
+        : aux_(static_cast<size_t>(game_count)), contribs_(player_games.size()),
+          parents_or_ranks_(player_games.size(), -1),
+          pop_targets_or_start_times_(static_cast<size_t>(game_count))
+    {
+        const auto player_count = player_games.size();
+
+        // determine how many players are needed for each game
+        for (size_t player {0u}; player != player_count; ++player) {
+            const auto game = player_games[player];
+            --pop_targets_or_start_times_[static_cast<size_t>(game)];
+        }
+
+        // start single-player games immediately
+        for (auto& elem : pop_targets_or_start_times_)
+            if (elem == -1) elem = 0;
+
+        // record players' population contributions toward multiplayer games
+        for (size_t player {0u}; player != player_count; ++player) {
+            const auto game = player_games[player];
+            if (pop_targets_or_start_times_[static_cast<size_t>(game)] != 0)
+                contribs_[player].emplace_back(game, 1u);
+        }
+    }
+
+    void DisjointPlayerSets::connect(size_t player1, size_t player2)
+    {
+        // one connection per tick of the clock
+        ++_time;
+        
+        // find the leaders and stop if they are already the same
+        player1 = find_set(player1)
+        player2 = find_set(player2)
+        if (player1 == player2) return;
+
+        // perform union by rank
+        if (parents_or_ranks_[player1] > parents_or_ranks_[player2]) {
+            // player2 has superior (more negative) rank, so it remains leader
+            parents_or_ranks_[player1] = player2;
+            merge_contribs(player2, player1);
+        } else {
+            if (parents_or_ranks_[player1] == parents_or_ranks_[player2]) {
+                // players have equal rank, so promote player1
+                --parents_or_ranks_[player1];
+            }
+
+            // player1 has superior (more negative) rank, so it remains leader
+            parents_or_ranks_[player2] = player1;
+            merge_contribs(player1, player2);
+        }
+    }
+
+    constexpr DisjointPlayerSets::Contribution::Contribution(
+            const unsigned game, const unsigned population) noexcept
+        : game{game}, population{population}
+    {
+    }
+
+    constexpr DisjointPlayerSets::Contribution::Contribution() noexcept
+        : game{}, population{}
+    {
+    }
+
+    size_t DisjointPlayerSets::find_set(size_t player) noexcept
+    {
+        // find the leader
+        auto leader = player;
+        while (parents_or_ranks_[leader] >= 0)
+            leader = static_cast<size_t>(parents_or_ranks_[leader]);
+
+        // compress the path
+        while (parents_or_ranks_[player] != leader) {
+            const auto parent = parents_or_ranks_[player];
+            parents_or_ranks_[player] = leader;
+            player = parent;
+        }
+
+        return leader;
+    }
+
+    void DisjointPlayerSets::merge_contribs(const size_t dest, const size_t src)
+    {
+
+    }
+}

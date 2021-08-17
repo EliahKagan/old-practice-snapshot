@@ -1,0 +1,18 @@
+'use strict';
+
+const BASE = 10, HIGH_MULTIPLIER = 2**32;
+
+function separate(digits) {
+    let lo = 0, hi = 0;
+
+    for (const c of digits) {
+        lo = lo * BASE + Number(c);
+        hi = hi * BASE + Math.floor(lo / HIGH_MULTIPLIER);
+        lo %= HIGH_MULTIPLIER;
+    }
+
+    return [lo, hi];
+}
+
+const [lo, hi] = separate('10000000000');
+console.log(`lo=${lo}, hi=${hi}`);

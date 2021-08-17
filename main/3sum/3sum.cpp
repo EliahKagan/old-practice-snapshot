@@ -1,0 +1,35 @@
+class Solution {
+public:
+    static vector<vector<int>> threeSum(vector<int>& nums);
+};
+
+vector<vector<int>> Solution::threeSum(vector<int>& nums) {
+    sort(begin(nums), end(nums));
+
+    vector<vector<int>> ret;
+    if (nums.size() < 3u) return ret;
+
+    const auto left_stop = nums.size() - 2u;
+    const auto right_start = nums.size() - 1u;
+
+    for (size_t left {0u}; left != left_stop; ) {
+        const auto left_val = nums[left];
+
+        for (auto mid = left + 1, right = right_start; mid < right; ) {
+            const auto mid_val = nums[mid], right_val = nums[right];
+            const auto sum = left_val + mid_val + right_val;
+
+            if (sum == 0) ret.push_back({left_val, mid_val, right_val});
+
+            if (sum <= 0)
+                while (++mid < right && nums[mid] == mid_val) { }
+
+            if (sum >= 0)
+                while (mid < --right && nums[right] == right_val) { }
+        }
+
+        while (++left != left_stop && nums[left] == left_val) { }
+    }
+
+    return ret;
+}

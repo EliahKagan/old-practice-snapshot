@@ -1,0 +1,27 @@
+#ifdef NDEBUG
+#error Runtime assertions are unexpectedly disabled for this build.
+#endif
+
+#include <array>
+#include <bitset>
+#include <cassert>
+#include <cstdio>
+#include <memory>
+
+int main()
+{
+    constexpr std::size_t nmax {500}, mmax {500};
+    std::array<std::unique_ptr<std::bitset<mmax>>, nmax> rows;
+
+    std::size_t n {}, m {}, topics {0}, teams {0};
+    std::scanf("%zu %zu", &n, &m);
+    assert(n <= nmax && m <= mmax);
+
+
+
+    char line[mmax + 1] {};
+    for (std::size_t i = 0; i != n; ++i) {
+        std::scanf(" %500s", line);
+        rows[i] = new std::bitset<mmax>{}
+    }
+}

@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+
+internal sealed class Trie<T> : Dictionary<T, Trie<T>> { }
+
+internal static class TrieEx {
+    private static bool Attach<T>(this Trie<T> self, IEnumerator<T> en)
+    {
+        if (!en.MoveNext()) return true;
+
+        do {
+            var child = new Trie<T>();
+            self.Add(en.Current, child);
+            self = child;
+        }
+        while (en.MoveNext());
+
+        return false;
+    }
+
+    /// <summary> Adds a chain to a trie, detecting if it is a sub- or
+    /// superchain of any chain already added.</summary>
+    /// <typeparam name="T">The type of keys in the chain.</typeparam>
+    /// <param name="self">The trie that is to be grown.</param>
+    /// <param name="chain">The chain that is to be added to the trie.</param>
+    /// <returns>True if chain is a sub- or superchain of any chain already
+    /// added, and false otherwise.</returns>
+    internal static bool Grow<T>(this Trie<T> self, IEnumerable<T> chain)
+    {
+        using (var en = chain.GetEnumerator()) {
+            while (en.MoveNext()) {
+                self.TryGetValue(en.Current, out self);
+            }
+
+            //
+        }
+    }
+}

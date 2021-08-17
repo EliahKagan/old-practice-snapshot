@@ -1,0 +1,49 @@
+notes for BotClean Partially Observable
+
+Make --full-game take a filename argument containing the master board (with all
+locations visible). If provided, and the file can be opened and is in the
+correct format, the initial input state (with some cells occluded) will be
+generated from it.
+
+Write a static class Test that simulates the behavior of JudgeBot (and provides
+scaffolding to facilitate easy local testing). Testing code already in Solution
+will be moved to Test, with all appropriate modifications. Most code in Test
+will be new. Code in Test will do most or all of the processing of command-line
+arguments to determine whether or not test mode (i.e., the non-judged mode for
+local debugging -- the pre-submission tests of the program itself) is in
+effect. If we are in test mode, code in the Test class opens the master board
+file, generates occluded per-move inputs, and saves the inputs in its own 2D-
+array-like object (a List<char[]> or similar). This is not to be confused with
+the botcleanv2.board file that will always be used, by code in the Solution
+class, to save and retrieve board state information (so that the bot can
+remember what it has seen before and thus in effect "observe" more of the board
+each time).
+
+Write a custom Solution.ReadBoard() method that reads the board. It will take
+input from stdin when the program is in normal mode (i.e., --full-game was not
+given), but will call Test.ReadBoard() when the program is in test mode (i.e.,
+--full-game was given and the board state is determined by code in the Test
+class that obtains the initial state from the master board and tracks each
+move's effect on the board's full state).
+
+Write a custom Solution.WriteLine() method that records moves. It will just
+write to stdout when the program is in normal mode, but will also call
+Test.WriteLine() when the program is in test mode (i.e., --full-game was
+given). Just as Test.ReadLine() accesses the stored board configuration,
+Test.WriteLine() mutates it.
+
+When in test mode (i.e., --full-game was given), code in the Solution class --
+probably Solution.NextMove(), called from a loop in Solution.Main() -- will
+continue making moves until Test.ReadBoard() returns a board where no useful
+moves can be made. That is the case when the information on the board, combined
+with saved observed state information from botcleanv2.board, proves there are
+no more dirty cells left to clean. In every iteration of this loop in
+Solution.Main(), the file botcleanv2.board is opened (if it exists) and
+combined with the board read via ReadBoard(). After every move, this board file
+is created (being overwritten if it existed already). Solution.NextMove() will
+perform this action (or call a method that does) immediately before or after it
+calls Solution.WriteLine().
+
+Normal mode is similar, except there is only one iteration (per run of the
+program) and Solution.ReadBoard() reads from stdin rather than delegating
+board reads to Test.ReadBoard().

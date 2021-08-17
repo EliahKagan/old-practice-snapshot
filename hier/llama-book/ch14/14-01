@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use List::Util qw(max);
+
+my @values = sort { $a <=> $b } split q{ }, <>;
+my $width = max map { length } @values;
+for my $value (@values) { printf "%*g\n", $width + 1, $value }

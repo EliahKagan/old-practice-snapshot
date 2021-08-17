@@ -1,0 +1,105 @@
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <iterator>
+#include <set> 
+
+namespace {
+    inline void add(std::multiset<int>& low, std::multiset<int>& high,
+                    const int e)
+    {
+        const auto p = low.crbegin(); // iterator to highest of lows
+        (p == low.crend() || e < *p ? low : high).insert(e);
+    }
+
+    inline bool remove_from(std::multiset<int>& vals, const int e)
+    {
+        const auto p = vals.find(e);
+
+        if (p != vals.end()) {
+            vals.erase(p);
+            return true;
+        }
+
+        return false;
+    }
+
+    inline bool remove(std::multiset<int>& low, std::multiset<int>& high,
+                       const int e) // returns true if an element was removed
+    {
+        return remove_from(low, e) || remove_from(high, e);
+    }
+
+    inline void rebalance_from_low(std::multiset<int>& low,
+                                   std::multiset<int>& high)
+    {
+        const auto p = std::prev(low.cend()); // iterator to highest of lows
+        high.insert()
+
+        const auto p = low.crbegin();
+        high.insert(*p);
+        low.erase(p);
+    }
+
+    inline void rebalance(std::multiset<int>& low, std::multiset<int>& high)
+    {
+        // IF we must rebalance, it's from the bigger multiset to the smaller.
+        using Size = std::multiset<int>::size_type; 
+        static constexpr auto from_low = static_cast<Size>(-2);
+        static constexpr auto from_high = static_cast<Size>(+2);
+
+        switch (low.size() - high.size()) {
+        case from_low:
+            rebalance_from_low(low, high);
+            break;
+        }
+    }
+
+    inline double compute_median(const std::multiset<int>& low,
+                                 const std::multiset<int>& high)
+    {
+
+    }
+
+    inline void complain()
+    {
+        std::puts("Wrong!");
+    }
+
+    inline void print_median_or_complain(const std::multiset<int>& low,
+                                         const std::multiset<int>& high)
+    {
+
+    }
+}
+
+int main()
+{
+    std::multiset<int> low, high;
+
+    auto n = 0;
+    for ((void)std::scanf("%d", &n); n > 0; --n) {
+        auto q = '\0';
+        auto e = 0;
+        (void)std::scanf(" %c %d", &q, &e);
+
+        switch (q) {
+        case 'a':
+            add(low, high, e);
+            break;
+
+        case 'r':
+            if (!remove(low, high, e)) {
+                complain();
+                continue; // nothing removed, so don't rebalance or recompute
+            }
+            break;
+
+        default:
+            std::abort();
+        }
+
+        rebalance(low, high);
+        print_median_or_complain(low, high);
+    }
+}

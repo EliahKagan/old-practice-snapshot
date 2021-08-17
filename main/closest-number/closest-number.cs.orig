@@ -1,0 +1,17 @@
+using System;
+using static System.Console;
+
+internal static class Solution {
+    private static void Main()
+    {
+        for (var t = int.Parse(ReadLine()); t > 0; --t) {
+            var record = Array.ConvertAll(ReadLine().Split(' '), double.Parse);
+
+            var a = record[0];
+            var b = record[1];
+            var x = record[2];
+
+            WriteLine(Convert.ToInt32(Math.Floor(Math.Pow(a, b) / x) * x));
+        }
+    }
+}

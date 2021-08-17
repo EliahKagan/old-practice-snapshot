@@ -1,0 +1,25 @@
+#include <stdio.h>
+
+static void read_record(int *const a, const int n)
+{
+    for (int i = 0; i < n; ++i) scanf("%d", &a[i]);
+}
+
+static int read_row_contribution(const int n, int i)
+{
+    int j = n - i - 1, parity = 1;
+
+    if (i > j) {
+        parity = -1;
+        const int tmp = i;
+        i = j;
+        j = tmp;
+    }
+
+    for (int k = 0; k < i; ++k)
+}
+
+int main(void)
+{
+    //
+}

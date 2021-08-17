@@ -1,0 +1,1 @@
+The procedure for finding the best nonintersecting subcrosses is based on an incorrect formula for when skew crosses intersect.

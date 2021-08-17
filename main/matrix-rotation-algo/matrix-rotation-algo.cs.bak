@@ -1,0 +1,62 @@
+#define DEBUG
+
+using System;
+using System.Diagnostics.Contracts;
+
+[assembly: System.Reflection.AssemblyVersion("0.1.0.0")]
+
+internal static class Solution {
+    private static int[] GetShell(this int[,] matrix, int imin, int jmin,
+                                                      int imax, int jmax)
+    {
+        var shell = new int[(imax - imin + jmax - jmin) * 2];
+        var k = 0; // index into shell
+
+        var i = imin;
+        var j = jmin;
+
+        while (i <= imax)   shell[k++] = matrix[i++, j];
+        while (j <= jmax)   shell[k++] = matrix[i, j++];
+        while (i >= imin)   shell[k++] = matrix[i--, j];
+        while (j > jmin)    shell[k++] = matrix[i, j--];
+
+        Contract.Assert(k == shell.Length);
+        return shell;
+    }
+
+    private static int[] Cycle(this int[] shell, int r)
+    {
+        var len = shell.Length;
+        var cycled = new int[len];
+        r %= len;
+
+        var j = 0;  // index into image (cycled)
+
+        var i = r;  // index into pre-image (shell)
+        while (i != len) cycled[i++] = shell[j++];
+
+        i = 0;
+        while (i != r) cycled[i++] = shell[j++];
+
+        Contract.Assert(j == len);
+        return cycled;
+    }
+
+    private static int[] PutShell(this int[,] matrix, int[] shell,
+                                  int imin, int jmin, int imax, int jmax)
+    {
+        var k = 0; // index into shell
+
+        var i = imin;
+        var j = jmin;
+
+        while (i <= imax)   matrix[i++, j] = shell[k++];
+        while (i <= jmax)   matrix[i, j++] = shell[k++];
+        while ()
+    }
+
+    private static void Main()
+    {
+        //
+    }
+}

@@ -1,0 +1,151 @@
+<Query Kind="FSharpProgram" />
+
+open Checked
+
+module StringReversal =
+    // Reverses a string, Way A: make array, make reversed array, make string.
+    let reverseA (s : string) =
+        s.ToCharArray () |> Array.rev |> System.String
+    
+    // Reverses a string, Way B: make array, reverse it in place, make string.
+    let reverseB (s : string) =
+        let revInPlace (a : 'a array) =
+            let rec r i j =
+                if i < j then
+                    let tmp = a.[i]
+                    a.[i] <- a.[j]
+                    a.[j] <- tmp
+                    r (i + 1) (j - 1)
+                else
+                    a
+        
+            Array.length a - 1 |> r 0
+        
+        s.ToCharArray () |> revInPlace |> System.String
+    
+    let test () = // string reversal unit test
+        let s = "abcdefghijklmnopqrstuvwxyz"
+        let t = "Madam, I'm Adam"
+        let u = ""
+    
+        [reverseA; reverseB]
+        |> List.iter (fun f -> printfn "%A" [f s; f t; f u])
+
+module Fibonacci =
+    // Computes the fibonacci sequence with the tail recursive O(n) algorithm.
+    let inline fibonacci (n : 'a) =
+        let zero : 'a = LanguagePrimitives.GenericZero
+        let one : 'a = LanguagePrimitives.GenericOne
+    
+        let rec fib a b n' =
+            if n' = zero then a else fib b (a + b) (n' - one)
+        
+        if n < zero then
+            failwith "Fibonacci sequences have no negatively indexed positions"
+        else
+            fib zero one n
+    
+    let test () =
+        [0..10] |> List.map fibonacci |> printfn "%A"
+        200I |> fibonacci |> printfn "%A"
+        
+        try
+            fibonacci -1L |> printfn "%d"
+        with
+        | e -> eprintfn "error: %s" e.Message
+
+module CayleyTable =
+    // Prints a Cayley table for the specified operator, left operand domain,
+    // right operand domain, and minimum column width, Way A: row by row.
+    let rec printA operator leftDomain rightDomain width =
+        match leftDomain with
+        | []    -> () // no more rows
+        | x::xs ->
+            rightDomain
+            |> List.map (operator x >> sprintf "%*d" width)
+            |> String.concat " "
+            |> stdout.WriteLine // outside LINQPad, should use:  printfn "%s"
+            
+            printA operator xs rightDomain width
+    
+    // Prints a Cayley table for the specified operator, left operand domain,
+    // right operand domain, and minimum column width, Way B: cell by cell.
+    let printB operator leftDomain rightDomain width =
+        let format = sprintf "%*d" width
+    
+        for x in leftDomain do
+            match rightDomain with
+            | y::ys ->
+                operator x y |> format |> stdout.Write
+                
+                for y' in ys do
+                    stdout.Write ' '
+                    operator x y' |> format |> stdout.Write
+                
+                stdout.WriteLine ()
+            | []    -> ()
+    
+    let test () = // prints 12x12 multiplication tables, with no row/col labels
+        [printA; printB]
+        |> List.iter (fun f -> f (*) [1..12] [1..12] 3; printfn "")
+
+module FileData =
+    open System.IO
+    open System.Security
+    
+    // Computes the sum of all integers in a file, where each line of the file
+    // contains a single integer (and optional leading/trailing whitespace),
+    // Way A: read file's lines with an explicit tail-recursive helper function.
+    let sumFromFileA (path : string) =
+        use reader = new StreamReader(path)
+        
+        let rec sum acc =
+            match reader.ReadLine () with
+            | null  -> acc
+            | line  -> acc + int line |> sum
+        
+        sum 0
+    
+    // Computes the sum of all integers in a file, where each line of the file
+    // contains a single integer (and optional leading/trailing whitespace),
+    // Way B: read file's lines with File.ReadLines.
+    let sumFromFileB path =
+        path |> File.ReadLines |> Seq.map int |> Seq.sum
+    
+    // These functions compute the sum of all integers in a file, like
+    // sumFromFileA and sumFromFileB (by calling those functons, respectively),
+    // but returns error messages for documented errors.
+    let trySumFromFileA, trySumFromFileB =
+        let trySum summer path =
+            try
+                summer path, null
+            with
+            | :? ArgumentNullException              -> reraise ()
+            | :? ArgumentException
+            | :? IOException
+            | :? SecurityException
+            | :? UnauthorizedAccessException as e   -> 0, e
+        
+        trySum sumFromFileA, trySum sumFromFileB
+    
+    let test () =
+        let seqToTempFile (sequence : 'a seq) =
+            let path = Path.GetTempFileName ()
+            use writer = new StreamWriter(path, true)
+            sequence |> Seq.iter writer.WriteLine
+            path
+        
+        let goodPath = seqToTempFile {1..100}
+        
+        for path in [goodPath; "nonexistent.txt"; @"C:\"; ""] do
+            for f in [trySumFromFileA; trySumFromFileB] do
+                match f path with
+                | n, null   -> printfn "%d" n
+                | _, e      -> eprintfn "error: %s" e.Message
+        
+        File.Delete goodPath
+
+StringReversal.test ()
+Fibonacci.test ()
+CayleyTable.test ()
+FileData.test ()

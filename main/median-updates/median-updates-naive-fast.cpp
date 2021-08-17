@@ -1,0 +1,104 @@
+#define MAKE_DEBUGGING_LESS_HORRIBLE false
+
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <cinttypes>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <limits>
+#include <unordered_set>
+
+#ifdef MAKE_DEBUGGING_LESS_HORRIBLE
+#include <cstring>
+#endif
+
+namespace {
+    constexpr std::size_t nmax {100'000u};
+    constexpr auto low = std::numeric_limits<std::int32_t>::min();
+    constexpr std::int32_t no_value {}; // "doesn't mean to hold a value yet"
+
+    inline void print_median(const std::int32_t* const a,
+                             const std::ptrdiff_t i) // i indexes last element
+    {
+        const auto idx_qr = std::div(i, static_cast<decltype(i)>(2));
+
+        if (idx_qr.rem != 0) {
+            std::printf("%" PRId32 "\n", a[idx_qr.quot + 1]);
+            return;
+        }
+
+        const auto m = static_cast<std::int_fast64_t>(a[idx_qr.quot])
+                     + static_cast<std::int_fast64_t>(a[idx_qr.quot + 1]);
+
+        if (m == -1) {
+            std::puts("-0.5");
+            return;
+        }
+
+        const auto val_qr = std::div(m, static_cast<decltype(m)>(2));
+
+        if (val_qr.rem == 0) std::printf("%" PRIdFAST64 "\n", val_qr.quot);
+        else std::printf("%" PRIdFAST64 ".5\n", val_qr.quot);
+    }
+
+    inline void run(int n, std::int32_t* __restrict const a,
+                    std::unordered_set<std::int32_t>& __restrict s)
+    {
+        char q {};
+        auto e = no_value;
+        for (std::ptrdiff_t i {0}; n-- != 0; ) { // i indexes the last element
+            (void)std::scanf(" %c %" SCNd32, &q, &e);
+
+            if (q == 'a') { // INSERTION
+                auto j = i, k = ++i; // shift items from j to k (always j + 1)
+                while (e < a[j]) a[k--] = a[j--];
+                a[k] = e; // insert at k, then can check for a duplicate at j
+                if (a[j] != e || j == 0) s.insert(e); // we must remember e
+            } else {        // REMOVAL
+                const auto p = s.find(e);
+                if (p == s.end()) {
+    no_update:
+                    std::puts("Wrong!");
+                    continue;
+                }
+
+                auto j = i - 1; // j will index just before the removed element
+                for (auto t0 = a[i], t1 = no_value; t0 != e; ) {
+                    t1 = a[j];
+                    a[j--] = t0;
+                    if (t1 == e) break;
+                    t0 = a[j];
+                    a[j--] = t1;
+                }
+
+                if (a[j] != e || j == 0) s.erase(p); // forget e, if was unique
+
+                if (--i == 0) goto no_update; // update size, act accordingly
+            }
+
+            print_median(a, i);
+        }
+    }
+}
+
+int main()
+{
+    std::size_t n {};
+    (void)std::scanf("%zu", &n);
+    if (n < 1u || n > nmax) std::abort();
+
+    std::unordered_set<std::int32_t> s;
+
+    std::int32_t* __restrict const a =
+            static_cast<std::int32_t*>(alloca((n + 1u) * sizeof *a));
+    *a = low; // sentinel element
+#if MAKE_DEBUGGING_LESS_HORRIBLE
+    std::memset(a + 1, 0xCC, n * sizeof *a);
+#endif
+
+    run(static_cast<int>(n), a, s);
+}

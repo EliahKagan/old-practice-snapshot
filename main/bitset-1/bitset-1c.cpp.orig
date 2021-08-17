@@ -1,0 +1,25 @@
+#include <iostream>
+
+int main()
+{
+    constexpr auto mod = 1u << 31;
+    unsigned n {}, slow {}, p {}, q {};
+    std::cin >> n >> slow >> p >> q;
+
+    const auto hop = [=](unsigned& pos) noexcept {
+        pos = (pos * p + q) % mod;
+    };
+
+    auto fast = slow;
+    do {
+        hop(fast);
+        hop(fast);
+        hop(slow);
+        //std::cerr << "fast:" << fast << " slow:" << slow << '\n';
+    }
+    while (fast != slow);
+
+    auto i = 0u;
+    for (hop(fast); fast != slow && n-- != 0u; hop(fast)) ++i;
+    std::cout << i << '\n';
+}

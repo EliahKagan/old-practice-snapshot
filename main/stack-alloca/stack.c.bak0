@@ -1,0 +1,80 @@
+// stack0.c - fun with _alloca
+
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <locale.h>
+#include <malloc.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <wchar.h>
+
+static const wchar_t *g_progname;
+
+static _declspec(noreturn) void die(const wchar_t *__restrict const fmt, ...)
+{
+    assert(fmt != NULL);
+
+    fwprintf(stderr, L"%ls: error: ", g_progname);
+
+    va_list v;
+    va_start(v, fmt);
+    vfwprintf(stderr, fmt, v);
+    va_end(v);
+
+    fputwc(L'\n', stderr);
+
+    exit(EXIT_FAILURE);
+}
+
+static inline bool big_sizes(void) // returns true if unintmax_t is size_t
+{
+    return (uintmax_t)SIZE_MAX == UINTMAX_MAX;
+}
+
+static inline bool is_ws(const wchar_t *const a)
+{
+    assert(a != NULL);
+
+    wchar_t c;
+    return swscanf_s(a, L" %lc", &c, 1u) == EOF;
+}
+
+static size_t to_size(const wchar_t *const a)
+{
+    assert(a != NULL);
+
+    _set_errno(0);
+    const wchar_t *end = NULL;
+    const uintmax_t n = wcstoumax(a, (wchar_t **)&end, 0);
+    int e = 0;
+    _get_errno(&e);
+
+    if (!is_ws(end) || n == UINTMAX_C(0)
+                    || (big_sizes() ? (n == UINTMAX_MAX && e == ERANGE)
+                                    : n > (uintmax_t)SIZE_MAX))
+        die(L"size argument must be integer in range 1..%Iu", SIZE_MAX);
+
+    return (size_t)n;
+}
+
+int wmain(int argc, wchar_t **argv)
+{
+    assert(argc > 0);
+    g_progname = argv[0];
+    if (argc != 2) die(L"too %ls arguments", (argc < 2 ? L"few" : L"many"));
+
+    if (_wsetlocale(LC_ALL, L"") == NULL)
+        fwprintf(stderr, L"%ls: warning: failure retrieving locale\n", argv[0]);
+
+    const size_t n = to_size(argv[1]);
+    wprintf(L"Attempting to allocate %Iu bytes on the stack...", n);
+    fflush(stdout);
+
+    const void *const p = _alloca(n);
+    wprintf(L" %ls!\n", (p == NULL ? L"failed" : L"success"));
+    return p == NULL ? EXIT_FAILURE : EXIT_SUCCESS;
+}

@@ -1,0 +1,29 @@
+using System.Collections.Generic;
+using System.Linq;
+using static System.Console;
+
+internal static class Solution {
+    private static IEnumerable<int> ReadRecord()
+            => ReadLine().Split(' ').Select(int.Parse);
+
+    private static Dictionary<T, long>
+    Frequencies<T>(this IEnumerable<T> values) where T : struct
+    {
+        var freqs = new Dictionary<T, long>();
+
+        foreach (var val in values) {
+            if (freqs.ContainsKey(val)) ++freqs[val];
+            else freqs.Add(val, 1L);
+        }
+
+        return freqs;
+    }
+
+    private static void Main()
+    {
+        foreach (var t in Enumerable.Range(0, int.Parse(ReadLine()))) {
+            ReadLine(); // don't need n
+            WriteLine(ReadRecord().Frequencies().Values.Sum(f => f * (f - 1L)));
+        }
+    }
+}

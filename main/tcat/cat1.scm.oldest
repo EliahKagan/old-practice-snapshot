@@ -1,0 +1,13 @@
+;; cat1.scm - Very simple cat-like utility. Major limitations:
+;; (a) No support for command-line flags other than - and --.
+;; (b) Prints a newline at the end of non-blank files even if one wasn't there.
+;; (c) Does not detect read errors.
+
+(use-modules (ice-9 rdelim))
+
+(define (cat port)
+  (let ((line (read-line port)))
+    (cond ((eof-object? line) (quit))
+          (else (display line) (newline) (cat port)))))
+
+(cat (current-input-port))

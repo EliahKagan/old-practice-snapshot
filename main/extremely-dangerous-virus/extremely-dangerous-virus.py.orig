@@ -1,0 +1,5 @@
+M = 1000000007  # 10**9 + 7
+H = 500000004   # modular inverse of 2 (mod M)
+
+a, b, t = map(int, raw_input().split())
+print (pow(a, t, M) + pow(b, t, M)) % M * H % M

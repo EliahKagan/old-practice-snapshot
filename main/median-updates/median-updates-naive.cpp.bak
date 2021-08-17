@@ -1,0 +1,49 @@
+#include <cstdio>
+#include <cstdlib>
+#include <limits>
+#include <unordered_set>
+
+int main()
+{
+    constexpr auto low = std::numeric_limits<int>::min(), high = 100'000;
+    constexpr auto init = 0; // so humans know not to read until the next write
+
+    auto n = init;
+    (void)std::scanf("%d", &n);
+    if (n < 1 || n > high) std::abort();
+
+    std::unordered_set<int> s;
+    const auto __restrict a = static_cast<int*>(alloca(n + 1));
+    a[0] = low;
+
+    auto q = '\0'; // init
+    for (auto e = init, i = 0; n-- != 0; ) {
+        (void)std::scanf("%c%d", &q, &e);
+        
+        if (q == 'a') { // insertion
+            auto j = i, k = ++i;
+            while (e < a[j]) a[k--] = a[j--];
+            a[k] = e;
+            if (a[j] != e || e == low) s.insert(e);
+        } else {        // removal
+            const auto p = s.find(e);
+            if (p == s.end() || --i == 0) { // miss, or it was the only element
+                std::puts("Wrong!");
+                continue;
+            }
+
+            auto j = i - 1; // j will index just before the rmeoved element
+            for (auto t0 = a[i], t1 = init; t0 != e; ) {
+                t1 = a[j];
+                a[j--] = t0;
+                if (t1 == e) break;
+                t0 = a[j];
+                a[j--] = t1;
+            }
+
+            if (a[j] != e || j == 0) s.erase(p);
+        }
+
+        // FIXME: we must print the updated median here
+    }
+}

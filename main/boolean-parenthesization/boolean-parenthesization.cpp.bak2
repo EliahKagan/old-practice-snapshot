@@ -1,0 +1,74 @@
+#include <array>
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+
+namespace {
+    template<std::size_t Size, int Mod>
+    class Par {
+    public:
+        Par();
+
+        // (*this)[n] is the number of distinct parenthesizations of a formula
+        // of n terms joined by (n - 1) binary operations.
+        constexpr int operator[](const std::size_t k) const { return m_elems[k]; }
+
+    private:
+        std::array<int, Size> m_elems{};
+    };
+
+    template<std::size_t Size, int Mod>
+    Par<Size, Mod>::Par()
+    {
+        m_elems[0u] = m_elems[1u] = m_elems[2u] = 1; // P_n = 1, for n <= 2
+
+        // P_n = sum_{k=1}^{n-1} P_k P_{n-1-k}, for n > 2
+        for (std::size_t n{3u}; n != Size; ++n) {
+            for (std::size_t k{1u}; k != n; ++k) {
+                m_elems[n] += m_elems[k] * m_elems[n - 1u - k];
+                m_elems[n] %= Mod;
+            }
+        }
+    }
+}
+
+namespace {
+    template<std::size_t MaxTerms, int Mod>
+    class Memo {
+    public:
+        explicit Memo(const std::string& expr);
+
+    private:
+        static Par<MaxTerms + 1u, Mod> s_par;
+
+        std::array<std::array<int, MaxTerms>, MaxTerms> m_memo {};
+    };
+
+    template<std::size_t MaxTerms, int Mod>
+    Memo<MaxTerms, Mod>::Memo(const std::string& expr)
+    {
+        if (expr.size() > MaxTerms * 2u - 1u)
+            throw std::out_of_range{"formula too big"};
+
+    }
+}
+
+namespace {
+    constexpr std::size_t at_least_half(const std::size_t numerator)
+    {
+        return numerator / 2u + numerator % 2u;
+    }
+
+    constexpr std::size_t max_expr_len{100u};
+
+    constexpr std::size_t max_terms {at_least_half(max_expr_len)};
+}
+
+int main()
+{
+    static constexpr std::size_t max_expr_len {100u};
+    static constexpr auto mod = 1003;
+
+    Memo<at_least_half(max_expr_len), mod> memo {""};
+}

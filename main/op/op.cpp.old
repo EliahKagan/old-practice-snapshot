@@ -1,0 +1,222 @@
+// op.cpp - loop perforing a single operation specified in Polish notation
+
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#if __cplusplus > 199711L // C++11
+typedef long long Long;
+#else
+typedef long Long;
+#endif
+
+Long factorial(Long n);
+inline double pi();
+inline double cbrt(double x);
+inline double asinh(double x);
+inline double acosh(double x);
+inline double atanh(double x);
+std::string& lowerize(std::string& s);
+bool line(std::string& op, std::vector<double>& operands); // true on success
+void do_op(const std::string& op, const std::vector<double>& operands);
+int main();
+
+Long factorial(Long n)
+{
+    Long k = 1L;
+    for (; n > 1L; --n) k *= n;
+    return k;
+}
+
+inline double pi()
+{
+    return std::acos(-1.);
+}
+
+inline double cbrt(double x)
+{
+#if __cplusplus > 199711L // C++11
+    return std::cbrt(x);
+#else
+    return std::pow(x, 1. / 3.);
+#endif
+}
+
+inline double asinh(double x)
+{
+#if __cplusplus > 199711L // C++11
+    return std::asinh(x);
+#else
+    return std::log(x + std::sqrt(x * x + 1.));
+#endif
+}
+
+inline double acosh(double x)
+{
+#if __cplusplus > 199711L // C++11
+    return std::acosh(x);
+#else
+    return std::log(x + std::sqrt(x * x - 1.));
+#endif
+}
+
+inline double atanh(double x)
+{
+#if __cplusplus > 199711L // C++11
+    return std::atanh(x);
+#else
+    return std::log((1. + x) / (1. - x)) / 2.;
+#endif
+}
+
+std::string& lowerize(std::string& s)
+{
+    for (std::string::iterator it = s.begin(); it != s.end(); ++it) {
+        char& c = *it;
+        c = static_cast<char>(std::tolower(c));
+    }
+
+    return s;
+}
+
+bool line(std::string& op, std::vector<double>& operands) // true on success
+{
+    // prepare the line for read and read operation name
+    std::string line;
+    std::getline(std::cin, line);
+    std::stringstream linestream (line, std::ios_base::in);
+    if (!(linestream >> op)) std::exit(EXIT_SUCCESS); // blank line quits
+
+    // de-alias the operation name
+    if (lowerize(op) == "plus") op = "+";
+    else if (op == "minus") op = "-";
+    else if (op == "mul") op = "*";
+    else if (op == "div") op = "/";
+    else if (op == "mod") op = "%";
+    else if (op == "pow") op = "^";
+
+    // determine arity
+    size_t arity;
+    if (op == "e" || op == "pi") arity = 0L;
+    else if (op == "exp" || op == "ln" || op == "log10" || op == "!"
+                || op == "sqrt" || op == "cbrt" || op == "d2r" || op == "r2d"
+                || op == "sin" || op == "cos" || op == "tan" || op == "csc"
+                || op == "sec" || op == "cot" || op == "aisn" || op == "acos"
+                || op == "atan" || op == "sinh" || op == "cosh" || op == "tanh"
+                || op == "asinh" || op == "acosh" || op == "atanh"
+                || op == "digits")
+        arity = 1L;
+    else if (op == "+" || op == "-" || op == "*" || op == "/" || op == "%"
+                || op == "^" || op == "max" || op == "min")
+        arity = 2L;
+    else if (op == "norm") arity = 3L; // distance from (0, 0, 0) in R3
+    else {
+        std::cerr << "error: unknown operation: " << op << '\n';
+        return false;
+    }
+
+    // read operands
+    std::vector<std::string> v;
+    for (std::string s; linestream >> s; v.push_back(s)) { }
+    if (v.size() != arity) {
+        std::cerr << "error: operation " << op << " takes " << arity
+                  << " operands, " << v.size() << " specified\n";
+        return false;
+    }
+
+    // convert operands to usable numbers
+    operands.clear();
+    for (std::vector<std::string>::const_iterator it = v.begin();
+                it != v.end(); ++it) {
+        double operand;
+        std::stringstream operandstream (*it, std::ios_base::in);
+        
+        if (!(operandstream >> operand)) {
+            std::cerr << "error: operand " << it - v.begin() + 1 
+                      << " (\"" << *it << "\") is not a number\n";
+            return false;
+        }
+        
+        operands.push_back(operand);
+    }
+
+    return true;
+}
+
+void do_op(const std::string& op, const std::vector<double>& operands)
+{
+    if (op == "e")          std::cout << std::exp(1.);
+    else if (op == "pi")    std::cout << pi();
+    else if (op == "exp")   std::cout << std::exp(operands[0]);
+    else if (op == "ln")    std::cout << std::log(operands[0]);
+    else if (op == "log10") std::cout << std::log10(operands[0]);
+    else if (op == "!") {
+        double x = operands[0], y = std::floor(x);
+        if (x == y)         std::cout << factorial(static_cast<Long>(y));
+        else {
+            std::cerr << "error: factorial takes an integer, "
+                      << x << "! undefined\n";
+            return;
+        }
+    }
+    else if (op == "sqrt")  std::cout << std::sqrt(operands[0]);
+    else if (op == "cbrt")  std::cout << cbrt(operands[0]);
+    else if (op == "d2r")   std::cout << operands[0] * pi() / 180.;
+    else if (op == "r2d")   std::cout << operands[0] * 180. / pi();
+    else if (op == "sin")   std::cout << std::sin(operands[0]);
+    else if (op == "cos")   std::cout << std::cos(operands[0]);
+    else if (op == "tan")   std::cout << std::tan(operands[0]);
+    else if (op == "csc")   std::cout << 1. / std::sin(operands[0]);
+    else if (op == "sec")   std::cout << 1. / std::cos(operands[0]);
+    else if (op == "cot")   std::cout << 1. / std::tan(operands[0]);
+    else if (op == "asin")  std::cout << std::asin(operands[0]);
+    else if (op == "acos")  std::cout << std::acos(operands[0]);
+    else if (op == "atan")  std::cout << std::atan(operands[0]);
+    else if (op == "sinh")  std::cout << std::sinh(operands[0]);
+    else if (op == "cosh")  std::cout << std::cosh(operands[0]);
+    else if (op == "tanh")  std::cout << std::tanh(operands[0]);
+    else if (op == "asinh") std::cout << asinh(operands[0]);
+    else if (op == "acosh") std::cout << acosh(operands[0]);
+    else if (op == "atanh") std::cout << atanh(operands[0]);
+    else if (op == "+")     std::cout << operands[0] + operands[1];
+    else if (op == "-")     std::cout << operands[0] - operands[1];
+    else if (op == "*")     std::cout << operands[0] * operands[1];
+    else if (op == "/")     std::cout << operands[0] / operands[1];
+    else if (op == "%")     std::cout << std::fmod(operands[0], operands[1]);
+    else if (op == "^")     std::cout << std::pow(operands[0], operands[1]);
+    else if (op == "max")   std::cout << std::max(operands[0], operands[1]);
+    else if (op == "min")   std::cout << std::min(operands[0], operands[1]);
+    else if (op == "norm")  std::cout << std::sqrt(operands[0] * operands[0]
+                                                 + operands[1] * operands[1]
+                                                 + operands[2] * operands[2]);
+    else if (op == "digits") {
+        std::streamsize n = static_cast<std::streamsize>(operands[0]), oldn;
+        if (static_cast<double>(n) != operands[0]) // invalid precision
+            std::cerr << "error: can't change precision to "
+                      << operands[0] << " digits\n";
+        else if (n == (oldn = std::cout.precision()))
+            std::clog << "precision unchanged, was already "
+                      << n << " digits\n";
+        else {
+            std::cout.precision(n);
+            std::clog << "precision changed to " << n << " digits (was "
+                      << oldn << ")\n";
+        }
+        
+        return;
+    }
+
+    std::cout << '\n';
+}
+
+int main()
+{
+    std::string op;
+    std::vector<double> operands;
+    for (; ; ) if (line(op, operands)) do_op(op, operands);
+}

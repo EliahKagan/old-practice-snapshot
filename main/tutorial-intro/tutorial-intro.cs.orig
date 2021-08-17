@@ -1,0 +1,95 @@
+using System;
+using System.Linq;
+
+internal static class Algorithm {
+    /// <summary>
+    /// The value returned by BinarySearch to indicate that the specified key
+    /// was not found in the array (in the range of indices that was searched).
+    /// This is not equal to any possible array index, and thus guaranteed to
+    /// remain negative even across implementation changes.
+    /// </summary>
+    internal const int NotFound = -1;
+
+    /// <summary>
+    /// Recursive binary search implementation, for arrays of int and
+    /// explicitly specified ranges of indices.
+    /// </summary>
+    /// <param name="array">The already-sorted array of int that is to be
+    /// searched. (Strictly speaking it need only be sorted from startIndex to
+    /// stopIndex, inclusive.)</param>
+    /// <param name="startIndex">The index specifying the first element of the
+    /// range to be considered in the search.</param>
+    /// <param name="stopIndex">The index specifying the last element of the
+    /// range to be considered in the search.</param>
+    /// <param name="key">The key to search for; the search ends when key is
+    /// found in the array between indices startIndex and stopIndex, or when
+    /// all elements in that range have been determined not to equal key
+    /// (assuming the array was properly sorted in that range before being
+    /// passed to BinarySearch(int[], int, int, int).</param>
+    /// <returns>The index of the array element containing key. If multiple
+    /// elements contain key, the index of any one may be returned. If no
+    /// elements in the given range contain key, NotFound is returned. If the
+    /// array is not sorted between startIndex and stopIndex (inclusive), then
+    /// the return value cannot be relied upon.</returns>
+    private static int BinarySearch(int[] array, int startIndex,
+                                    int stopIndex, int key)
+    {
+        var i = stopIndex - startIndex;
+        if (i < 0) return NotFound;
+        if (key < array[i]) return BinarySearch(array, startIndex, i - 1, key);
+        if (key > array[i]) return BinarySearch(array, key, i + 1, stopIndex);
+        return i;
+    }
+
+    /// <summary>
+    /// Recursive binary search implementation for arrays of int. See the
+    /// documentation comments on BinarySearch(int[], int, int, int) for
+    /// details.
+    /// </summary>
+    /// <param name="array">The already-everywhere-sorted array of int that is
+    /// to be searched.</param>
+    /// <param name="key">The key to search for.</param>
+    /// <returns>The index of an array element containing key if any.
+    /// Otherwise, NotFound.</returns>
+    internal static int BinarySearch(int[] array, int key)
+    {
+        return BinarySearch(array, 0, array.Length - 1, key);
+    }
+}
+
+internal static class Solution {
+    /// <summary>
+    /// Reads a line of input and interpretets it as an integer value.
+    /// </summary>
+    /// <returns>The integer value of the line of input read.</returns>
+    private static int ReadValue()
+    {
+        return int.Parse(Console.ReadLine());
+    }
+
+    /// <summary>
+    /// Reads a line of input and interprets it as multiple space-separated
+    /// integer values.
+    /// </summary>
+    /// <param name="count">The number of values to return; after the first
+    /// count fields read, other data are discarded.</param>
+    /// <returns>An array of the first n space-separated integers found on the
+    /// line of input that was read.</returns>
+    private static int[] ReadValues(int count)
+    {
+        return Console.ReadLine().Split(' ')
+                                 .Take(count).Select(int.Parse).ToArray();
+    }
+
+    /// <summary>
+    /// Simple test harness for Algorithm.BinarySearch(int, int).
+    /// </summary>
+    private static void Main()
+    {
+        var v = ReadValue();
+        var n = ReadValue();
+        var ar = ReadValues(n);
+
+        Console.WriteLine(Algorithm.BinarySearch(ar, v));
+    }
+}

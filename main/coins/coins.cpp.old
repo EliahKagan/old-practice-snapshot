@@ -1,0 +1,51 @@
+// coins.cpp - ask user for how many of each coin, then print values and total
+
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <vector>
+
+unsigned int howMany(const std::string& coinPlural);
+int main();
+
+unsigned int howMany(const std::string& coinPlural)
+{
+    unsigned int n;
+    do std::cout << "How many " << coinPlural << " do you have? ";
+    while (!(std::cin >> n));
+    return n;
+}
+
+int main()
+{
+    const unsigned int pennies = howMany("pennies"),
+        nickels = howMany("nickels"), dimes = howMany("dimes"),
+        quarters = howMany("quarters"), halfDollars = howMany("half dollars"),
+        dollars = howMany("dollar coins");
+    
+    std::vector<unsigned int> v;
+    v.push_back(pennies); v.push_back(nickels); v.push_back(dimes);
+        v.push_back(quarters); v.push_back(halfDollars); v.push_back(dollars);
+    
+    unsigned int max = 0u;
+    for (std::vector<unsigned int>::const_iterator it = v.begin();
+                it != v.end(); ++it)
+        if (*it > max) max = *it;
+
+    std::stringstream ss (std::ios_base::out);
+    ss << max;
+    const char h[] = "\nYou have ";
+    std::cout << std::setw(static_cast<int>(ss.str().size()))
+        << ss.str().size() << '\n' << 3 // TODO: remove this after debugging
+        << h << pennies << (pennies == 1 ? " penny." : " pennies.")
+        << h << nickels << (nickels == 1 ? " nickel." : " nickels.")
+        << h << dimes << (dimes == 1 ? " dime." : " dimes.")
+        << h << quarters << (quarters == 1 ? " quarter." : " quarters.")
+        << h << halfDollars << (halfDollars == 1 ? " half dollar."
+                                                 : " half dollars.")
+        << h << dollars << (dollars == 1 ? " dollar coin." : " dollar coins.")
+        << "\n\nThe value of all your coins is $" << std::setw(0) << std::fixed
+        << std::setprecision(2) << (pennies + nickels * 5 + dimes * 10
+            + quarters * 25 + halfDollars * 50 + dollars * 100) / 100 << ".\n";
+}

@@ -1,0 +1,104 @@
+#include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <functional>
+#include <iostream>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <string>
+#include <variant>
+
+namespace {
+    template<typename T>
+    constexpr T weak_cast(const T x) noexcept { return x; }
+
+    using Operand = long double;
+    using Operator = Operand(*)(Operand, Operand);
+    using Token = std::variant<std::monostate, Operand, Operator>;
+
+    class ParseError : public std::runtime_error {
+        using std::runtime_error::runtime_error;
+    };
+
+    Token read_token(std::istream& expression_stream)
+    {
+        std::string lexeme;
+        if (!(expression_stream >> lexeme)) return std::monostate{};
+
+        std::istringstream token_stream {lexeme};
+        Operand val {};
+        if (token_stream >> val) return val;
+
+        if (lexeme == "+") return [](auto a, auto b) { return a + b; };
+        if (lexeme == "-") return [](auto a, auto b) { return a - b; };
+        if (lexeme == "*") return [](auto a, auto b) { return a * b; };
+        if (lexeme == "/") return [](auto a, auto b) { return a / b; };
+
+        if (lexeme == "%") return weak_cast<Operator>(std::fmod);
+        if (lexeme == "arg") return weak_cast<Operator>(std::atan2);
+
+        throw ParseError{"lexeme is neither an operand nor an operator"};
+    }
+
+    Operand pop_operand(std::stack<Operand>& operands)
+    {
+        if (operands.empty()) throw ParseError{"operand expected"};
+        const auto ret = operands.top();
+        operands.pop();
+        return ret;
+    }
+
+    Operand evaluate(std::istream& expression_stream)
+    {
+        std::stack<Operand> operands;
+
+        for (; ; ) {
+            const auto token = read_token(expression_stream);
+
+            if (std::holds_alternative<Operand>(token)) {
+                operands.push(std::get<Operand>(token));
+            }
+            else if (std::holds_alternative<Operator>(token)) {
+                const auto second = pop_operand(operands);
+                const auto first = pop_operand(operands);
+                operands.push(std::get<Operator>(token)(first, second));
+            }
+            else {
+                assert(std::holds_alternative<std::monostate>(token));
+                break;
+            }
+        }
+
+        if (operands.empty()) throw ParseError{"unknown parse error (bug)"};
+        if (operands.size() != 1u) throw ParseError{"operator expected"};
+        return operands.top();
+    }
+
+    void evaluate_print(std::istream& expression_stream)
+    {
+        try {
+            std::cout << evaluate(expression_stream) << '\n';
+        }
+        catch (const ParseError& e) {
+            std::cout << "ERROR: " << e.what() << '\n';
+        }
+    }
+}
+
+int main()
+{
+    std::cout << "Enter one expression per line, or an empty line to quit.\n";
+
+    for (; ; ) {
+        std::cout << "\n>> " << std::flush;
+
+        std::string expression;
+        std::getline(std::cin, expression);
+
+        std::istringstream expression_stream {expression};
+        if ((expression_stream >> std::ws).eof()) break;
+
+        evaluate_print(expression_stream);
+    }
+}

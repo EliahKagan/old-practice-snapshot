@@ -1,0 +1,36 @@
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
+namespace {
+    inline int max(const int x, const int y, const int z)
+    {
+        return std::max(std::max(x, y), z);
+    }
+
+    void print_common(const std::vector<int>& a, const std::vector<int>& b,
+                      const std::vector<int>& c)
+    {
+        auto intersect = false;
+        const auto pp = a.cend(), qq = b.cend(), rr = c.cend();
+        auto p = a.cbegin(), q = b.cbegin(), r = c.cbegin();
+
+        while (p != pp && q != qq && r != rr) {
+            const auto key = max(*p, *q, *r);
+
+            while (p != pp && *p < key) ++p;
+            if (p == pp) break;
+
+            while (q != qq && *q < key) ++q;
+            if (q == qq) break;
+
+            while (r != rr && *r < key) ++r;
+            if (r == rr) break;
+
+
+        }
+
+        if (intersect) std::cout << '\n';
+        else std::cout << "-1\n";
+    }
+}

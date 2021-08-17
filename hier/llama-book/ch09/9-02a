@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+my $open_next = 1;
+my $path = q{};
+my $out;
+
+while (<>) {
+    if ($open_next) {
+        $open_next = 0;
+        $path = $ARGV;
+        open $out, '>', "$path.out";
+    }
+} continue {
+    print {$out} s/Fred/Larry/gir;
+
+    if (eof ARGV) {
+        close ARGV;
+        close $out;
+        $open_next = 1;
+    }
+}

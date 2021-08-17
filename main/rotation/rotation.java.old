@@ -1,0 +1,24 @@
+import java.util.Scanner;
+
+final class Solution {
+    private static int readRotationOffset(final int n, final Scanner sc)
+    {
+        final int front = sc.nextInt();
+        int i = 1;
+        while (i < n && front <= sc.nextInt()) ++i;
+        
+        final int split = i;
+        while (++i < n) sc.nextInt();
+        return split == n ? 0 : split;
+    }
+    
+    public static void main(final String[] args)
+    {
+        try (final Scanner sc = new Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t)
+                System.out.println(readRotationOffset(sc.nextInt(), sc));
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

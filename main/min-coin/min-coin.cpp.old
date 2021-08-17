@@ -1,0 +1,55 @@
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+namespace {
+    using Count = int;
+    using Currency = std::vector<Count>::size_type;
+
+    // Computes the smallest number of coins that may be used to make change
+    // for total. coins must be sorted nondecreasingly.
+    Count min_coins(const std::vector<Currency>& coins, const Currency total)
+    {
+        std::vector<Count> memo (total + 1u, -1);
+        memo[0u] = 0;
+
+        for (Currency subtotal {1u}; subtotal <= total; ++subtotal) {
+            for (const auto coin : coins) {
+                if (coin > subtotal) break;
+
+                const auto old_count = memo[subtotal - coin];
+
+                if (old_count != -1)
+                    memo[subtotal] = std::min(memo[subtotal], old_count + 1);
+            }
+        }
+
+        return memo[total];
+    }
+
+    std::vector<Currency> read_coins(std::vector<Currency>::size_type size)
+    {
+        std::vector<Currency> coins;
+        for (coins.reserve(size); size != 0u; --size) {
+            Currency coin {};
+            std::cin >> coin;
+            coins.push_back(coin);
+        }
+
+        std::sort(std::begin(coins), std::end(coins));
+        return coins;
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        std::vector<Currency>::size_type size;
+        Currency total {};
+        std::cin >> size >> total;
+
+        std::cout << min_coins(read_coins(size), total) << '\n';
+    }
+}

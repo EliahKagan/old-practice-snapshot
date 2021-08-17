@@ -1,0 +1,82 @@
+#include <limits>
+#include <unordered_map>
+#include <vector>
+using namespace std;
+
+namespace {
+    class DisjointSetElement {
+    public:
+        DisjointSetElement() = default;
+        DisjointSetElement(const DisjointSetElement&) = delete;
+        DisjointSetElement(DisjointSetElement&&) = delete;
+        DisjointSetElement& operator=(const DisjointSetElement&) = delete;
+        DisjointSetElement& operator=(DisjointSetElement&&) = delete;
+        ~DisjointSetElement() = default;
+
+        // Size of the set this element represents (leads) if any. Otherwise 0.
+        int size() const { return size_; }
+
+        void unite(DisjointSetElement* other); // union by size
+
+    private:
+        DisjointSetElement* findSet(); // finds representative element
+
+        DisjointSetElement* parent_ {this};
+
+        int size_ {1};
+    };
+
+    void DisjointSetElement::unite(DisjointSetElement* const other) {
+        const auto p = findSet(), q = other->findSet();
+        if (p == q) return;
+
+        if (p->size_ < q->size_) {
+            q->size_ += p->size_;
+            p->size_ = 0;
+            p->parent_ = q;
+        } else {
+            p->size_ += q->size_;
+            q->size_ = 0;
+            q->parent_ = p;
+        }
+    }
+
+    DisjointSetElement* DisjointSetElement::findSet() {
+        auto ret = this;
+        while (ret != ret->parent_) ret = ret->parent_;
+
+        for (auto cur = this; cur != ret; ) { // path compression
+            const auto next = cur->parent_;
+            cur->parent_ = ret;
+            cur = next;
+        }
+
+        return ret;
+    }
+
+
+    class DisjointRanges {
+    public:
+        void insert(int value);
+
+    private:
+        unordered_map<int, DisjointSetElement> elems_;
+    };
+
+    void DisjointRanges::insert(const int value)
+    {
+        auto& elem = elems_[value]; // creates the element if it did not exist
+
+    }
+}
+
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+    }
+};
+
+int main() {
+    DisjointSetElement e, f;
+    //e = f;
+}

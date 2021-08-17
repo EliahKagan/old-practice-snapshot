@@ -1,0 +1,66 @@
+#define DEBUG
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+
+internal static class Solution {
+    private static void Increment<TKey>(this Dictionary<TKey, int> self,
+                                        TKey key)
+    {
+        if (self.ContainsKey(key))
+            ++self[key];
+        else
+            self.Add(key, 1);
+    }
+
+    private static void Exchange<T>(T a, T b)
+    {
+        var c = a;
+        a = b;
+        b = c;
+    }
+
+    private static bool IsDeemedValid(this string s)
+    {
+        var freqs = new Dictionary<char, int>();
+        foreach (var ch in s) freqs.Increment(ch);
+
+        switch (freqs.Values.Distinct().Count()) {
+        case 0: case 1:
+            return true;
+
+        case 2:
+            var freq = freqs.Values.First();
+            var a = new HashSet<char>();
+            var b = new HashSet<char>();
+            foreach (var ch in freqs.Keys) (freqs[ch] == freq ? a : b).Add(ch);
+            var majority = Math.Max(a.Count, b.Count);
+            var minority = Math.Min(a.Count, b.Count);
+
+            //
+            var freq = freqs.Values.First();
+            var majority = new HashSet<char>();
+            var minority = new HashSet<char>();
+
+            foreach (var ch in freqs.Keys)
+                (freqs[ch] == freq ? majority : minority).Add(ch);
+
+            if (majority.Count < minority.Count) Exchange(a, b);
+
+            Assert(0 < minority.Count && minority.Count <= majority.Count);
+            Assert(minority.Count + majority.Count == freqs.Keys.Count);
+
+
+
+        default:
+            return false;
+        }
+    }
+
+    private static void Main()
+    {
+        Console.WriteLine(Console.ReadLine().IsDeemedValid() ? "YES" : "NO");
+    }
+}

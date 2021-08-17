@@ -1,0 +1,2 @@
+read -r
+grep -oP '(?<=<\s*)[[:alpha:]][[:alnum:]]*\b' | sort -u | paste -sd \; -

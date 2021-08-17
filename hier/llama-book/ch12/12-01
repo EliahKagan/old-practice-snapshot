@@ -1,0 +1,17 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+for my $path (@ARGV) {
+    if (not -e $path) {
+        print "\"$path\" does not exist.\n";
+        next;
+    }
+
+    my $r = (-r _ ? 'readable' : 'not readable');
+    my $w = (-w _ ? 'writable' : 'not writable');
+    my $x = (-x _ ? 'executable' : 'not executable');
+
+    print "\"$path\" is $r, $w, and $x.\n";
+}

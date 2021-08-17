@@ -1,0 +1,19 @@
+# Build files
+*.a
+*.bin
+*.class
+*.dll
+*.exe
+*.lib
+*.o
+*.obj
+*.pdb
+
+# Static analyzer output
+*.CLMonitoring.bat
+*.nativecodeanalysis.xml
+*.plist
+
+# Editor tempfiles
+*~
+*.tmp

@@ -1,0 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+internal static class Solution {
+    private static IEnumerable<long> ModifiedKaprekar(long p, long q)
+    {
+        for (; p <= q; ++p) {
+            var s = (p * p).ToString();
+            var wl = s.Length() / 2;
+            var left = long.Parse(s.Substring(0, wl));
+            var right = long.Parse(s.Substring(wl));
+            if (left + right == p) yield return p;
+        }
+    }
+
+    private static void Main()
+    {
+        //
+    }
+}

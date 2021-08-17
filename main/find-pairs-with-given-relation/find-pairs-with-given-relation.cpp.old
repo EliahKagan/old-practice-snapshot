@@ -1,0 +1,39 @@
+#include <cstddef>
+#include <iostream>
+#include <unordered_map>
+#include <unordered_set>
+
+namespace {
+    using Index = std::vector<int>::size_type;
+    
+    std::vector<int> read_record()
+    {
+        Index n {};
+        std::cin >> n;
+        
+        std::vector<int> a (n);
+        for (auto& x : a) std::cin >> x;
+        return a;
+    }
+    
+    bool has_disjoint_equal_product_pairs(const std::vector<int>& a)
+    {
+        if (a.size() < 4u) return false;
+        
+        std::unordered_map<int, std::unordered_set<Index>> product_indices;
+        const auto jstop = a.size(), istop = jstop - 1u;
+        
+        for (Index i {0u}; i != istop; ++i) {
+            for (auto j = i + 1u; j != jstop; ++j) {
+                
+            }
+        }
+        
+        return false;
+    }
+}
+
+int main()
+{
+    std::ios_base::sync_with_stdio(false);
+}

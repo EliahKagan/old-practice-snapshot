@@ -1,0 +1,16 @@
+using System;
+
+internal static class Solution {
+    private static void Main()
+    {
+        var s = Console.ReadLine().Replace(" ", string.Empty);
+        var n = s.Length;
+        var sqrt = Math.Sqrt(n);
+        var h = Convert.ToInt32(Math.Floor(sqrt));
+        var w = Convert.ToInt32(Math.Ceiling(sqrt));
+        if (h * w < n) ++h;
+        
+        var grid = new char[h, w];
+        for (var k = 0; k < n; ++k) grid[k / w, k % w] = s[k];
+    }
+}

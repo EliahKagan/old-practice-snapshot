@@ -1,0 +1,33 @@
+#define DEBUG
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+
+internal static class Solution {
+    private static string[] Read()
+    {
+        var a = new string[int.Parse(Console.ReadLine())];
+
+        foreach (var i in Enumerable.Range(0, a.Length))
+            a[i] = Console.ReadLine();
+
+        return a;
+    }
+
+    private static void Main()
+    {
+        var strs = Read();
+
+        foreach (var query in Read()) {
+            foreach (var s in strs) {
+                Console.WriteLine("\"{0}\" {1} \"{2}\".", s,
+                        (s.Contains(query) ? "contains" : "doesn't contain"), query);
+            }
+        }
+
+        //foreach (var query in Read())
+        //    Console.WriteLine(strs.Count(s => s.Contains(query)));
+    }
+}

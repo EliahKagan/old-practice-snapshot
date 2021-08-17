@@ -1,0 +1,39 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use Readonly;
+use IO::Prompt::Tiny qw(prompt);
+use Term::ANSIColor;
+
+Readonly my $LOWER_BOUND => 1;
+Readonly my $UPPER_BOUND => 100;
+Readonly my $EXIT_STATUS_WIN => 0;
+Readonly my $EXIT_STATUS_LOSE => 1;
+
+my $debug = ($ARGV[0] // q{}) eq '--debug';
+
+say "I'm thinking of a number from $LOWER_BOUND to $UPPER_BOUND...";
+my $secret = int($LOWER_BOUND + rand($UPPER_BOUND - $LOWER_BOUND + 1));
+
+while (prompt('Guess?') =~ /\s*(\d+)\s*/a) {
+    my $guess = int $1;
+
+    if ($debug) {
+        printf {*STDERR} "%sDEBUG: %d misses %d by %+d.%s\n", color('blue'),
+               $guess, $secret, $secret - $guess, color('reset');
+    }
+
+    if ($guess == $secret) {
+        say "Correct! $secret was the number I was thinking of.";
+        exit $EXIT_STATUS_WIN;
+    }
+
+    printf "Too %s.\n", ($guess < $secret ? 'low' : 'high');
+}
+
+# any non-numeric input, including "quit" and "exit," forefeits the game
+say 'Goodbye! Better luck next time.';
+exit $EXIT_STATUS_LOSE;

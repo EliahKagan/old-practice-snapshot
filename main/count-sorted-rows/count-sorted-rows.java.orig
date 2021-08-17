@@ -1,0 +1,53 @@
+import java.util.Scanner;
+import java.util.stream.IntStream;
+
+final class Solution {
+    private static int[] getRow(final Scanner sc, final int n)
+    {
+        return IntStream.range(0, n).map(i -> sc.nextInt()).toArray();
+    }
+    
+    private static boolean isIncreasing(final int[] row)
+    {
+        int prev = Integer.MIN_VALUE;
+        for (final int cur : row) {
+            if (cur <= prev) return false;
+            prev = cur;
+        }
+        
+        return true;
+    }
+    
+    private static boolean isDecreasing(final int[] row)
+    {
+        int prev = Integer.MAX_VALUE;
+        for (final int cur : row) {
+            if (cur >= prev) return false;
+            prev = cur;
+        }
+        
+        return true;
+    }
+    
+    private static boolean isIncreasingOrDecreasing(final int[] row)
+    {
+        return isIncreasing(row) || isDecreasing(row);
+    }
+    
+    public static void main(final String[] args)
+    {
+        try (final Scanner sc = new Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t) {
+                int count = 0;
+                
+                final int n = sc.nextInt();
+                for (int m = sc.nextInt(); m > 0; --m)
+                    if (isIncreasingOrDecreasing(getRow(sc, n))) ++count;
+                
+                System.out.println(count);
+            }
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

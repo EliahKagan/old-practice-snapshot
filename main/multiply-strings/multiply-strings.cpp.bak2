@@ -1,0 +1,60 @@
+class Solution {
+public:
+    static string multiply(const string& a, const string& b);
+
+private:
+    static void reversed_add(string& acc, string& elem);
+};
+
+string Solution::multiply(const string& a, const string& b)
+{
+    string acc, row;
+    string::size_type order {0u};
+
+    for_each(crbegin(b), crend(b), [&a, &acc, &row, &order](const char bd) {
+        row.resize(order, '0');
+        auto product = 0;
+
+        for_each(crbegin(a), crend(a), [&](const char ad) {
+            product += (ad - '0') * (bd - '0');
+            row.push_back('0' + product % 10);
+            product /= 10;
+        });
+
+        if (product != 0) {
+            assert(product < 10);
+            row.push_back('0' + product);
+        }
+
+        reversed_add(acc, row);
+        ++order;
+    });
+
+    reverse(begin(acc), end(acc));
+    if (acc.empty()) acc.push_back('0');
+    return acc;
+}
+
+void Solution::reversed_add(string& acc, string& elem)
+{
+    if (acc.capacity() < elem.capacity()) swap(acc, elem);
+    while (!elem.empty() && elem.back() ==  '0') elem.pop_back();
+    acc.resize(max(acc.size(), elem.size()) + 1u, '0');
+
+    auto sum = 0;
+    auto acc_it = begin(acc);
+
+    for (const auto elem_digit : elem) {
+        sum = sum / 10 + (*acc_it - '0') + (elem_digit - '0');
+        *acc_it = '0' + sum % 10;
+        ++acc_it;
+    }
+
+    if (sum < 10) {
+        assert(acc.back() == '0');
+        acc.pop_back();
+    }
+    else assert(acc.back() != '0');
+
+    elem.clear();
+}

@@ -1,0 +1,10 @@
+The first test case where your code failed:
+
+Input:
+())(((())(()()(()))))()(()))(((()))((()()(((()())()()())()))((()()()((()()()())()())))
+
+Its Correct output is:
+43
+
+And Your Output is:
+42

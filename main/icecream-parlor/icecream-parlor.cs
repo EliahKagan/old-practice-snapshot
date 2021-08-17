@@ -1,0 +1,49 @@
+#define DEBUG
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+
+internal static class Solution {
+    private static IEnumerable<int> Range(int n) => Enumerable.Range(0, n);
+
+    private static int GetOne() => int.Parse(Console.ReadLine());
+
+    private static int[] GetMany()
+            => Array.ConvertAll(Console.ReadLine().Split(' '), int.Parse);
+
+    private static void ChooseFlavors(int[] prices, int goal)
+    {
+        var indices = Range(prices.Length).ToArray();
+        Array.Sort(prices, indices);
+
+        var last_index = prices.Length - 1;
+        for (var i = 0; i < last_index; ++i) {
+            var key = goal - prices[i];
+            if (key <= 0) continue;
+
+            var j = Array.BinarySearch(prices, i + 1, last_index - i, key);
+            if (j < 0) continue;
+
+            var a = indices[i] + 1;
+            var b = indices[j] + 1;
+            Console.WriteLine("{0} {1}", Math.Min(a, b), Math.Max(a, b));
+            return;
+        }
+
+        Contract.Assert(false, "problem constraints assert a solution exists");
+    }
+
+    private static void Main()
+    {
+        foreach (var t in Range(GetOne())) {
+            var m = GetOne();
+            var n = GetOne();
+            var c = GetMany();
+
+            Contract.Assert(c.Length == n);
+            ChooseFlavors(c, m);
+        }
+    }
+}

@@ -1,0 +1,97 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <assert.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static inline void *xcalloc(const size_t count, const size_t size)
+{
+    void *const ret = calloc(count, size);
+    if (!ret) abort();
+    return ret;
+}
+
+struct buf {
+    char *data;
+    int pos;
+    int size;
+};
+
+static struct buf buf_init(const int size)
+{
+    return (struct buf){xcalloc(size, 1), 0, size};
+}
+
+static void buf_free(struct buf *const bp)
+{
+    free(bp->data);
+    bp->data = NULL;
+
+    bp->pos = bp->size = 0;
+}
+
+struct str {
+    char *chars;
+    int length;
+};
+
+static void str_read(struct buf *const bp, struct str *const sp)
+{
+    assert(bp->pos <= bp->size);
+    if (bp->pos == bp->size) abort();
+
+    sp->chars = bp->data + bp->pos;
+    sp->length = 0;
+
+    int ch = 0;
+    do {
+        ch = getchar();
+        if (ch == EOF) abort();
+    }
+    while (!isdigit((unsigned char)ch));
+
+    do {
+        bp->data[bp->pos++] = (char)ch;
+        if (bp->pos == bp->size) abort();
+        ++sp->length;
+        ch = getchar();
+    }
+    while (isdigit((unsigned char)ch));
+
+    assert(bp->pos + 1 < bp->size);
+    bp->data[bp->pos++] = '\0';
+}
+
+static int str_compare_as_bigint(const void *const p, const void *const q)
+{
+    const struct str *const sp = p, *const sq = q;
+
+    // The strings are short, so subtracting lengths won't overflow.
+    const int length_delta = sp->length - sq->length;
+    return length_delta != 0 ? length_delta : strcmp(sp->chars, sq->chars);
+}
+
+enum { k_kilo = 1000, k_mega = k_kilo * k_kilo };
+
+int main(void)
+{
+    struct buf b = buf_init(k_mega * 2);
+
+    int n = 0;
+    (void)scanf("%d", &n);
+
+    struct str *a = xcalloc(n, sizeof *a);
+    for (int i = 0; i < n; ++i) str_read(&b, &a[i]);
+    qsort(a, n, sizeof *a, str_compare_as_bigint);
+    for (int i = 0; i < n; ++i) printf("%s\n", a[i].chars);
+
+    free(a);
+    a = NULL;
+
+    buf_free(&b);
+}

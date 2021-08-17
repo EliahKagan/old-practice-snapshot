@@ -1,0 +1,3 @@
+mapfile -t
+declare -a a=(${MAPFILE[@]} ${MAPFILE[@]})
+printf '%s\n' "${a[*]}"

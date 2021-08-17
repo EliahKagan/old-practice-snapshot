@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+RADIX = 10
+
+def split_number(n, a, b):
+    deg = RADIX
+    
+    while deg < n:
+        left = n // deg
+        right = n % deg
+        
+        if left % a == 0 and right % b == 0:
+            return [left, right]
+        
+        deg *= RADIX
+    
+    return None
+
+for t in range(int(input())):
+    n, a, b = map(int, input().split())
+    left_right = split_number(n, a, b)
+    
+    # with the current split_number implementation, this logic isn't needed
+    if left_right:
+        left, right = map(str, left_right)
+        print(left, right.zfill(len(str(n)) - len(left)))
+    else:
+        print('-1')

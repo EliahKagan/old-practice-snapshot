@@ -1,0 +1,218 @@
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+#include <utility>
+#include <vector>
+
+namespace {
+    using std::size_t;
+
+    class DisjointPlayerSets {
+    public:
+        // @param player_games  player -> game
+        explicit DisjointPlayerSets(const std::vector<unsigned>& player_games,
+                                    unsigned game_count);
+
+        // advances the clock, joining and merging contributions from the
+        // player1's and player2's sublans if they were not already joined
+        void connect(size_t player1, size_t player2);
+
+    private:
+        struct Contribution {
+            unsigned game;
+            int negative_population;
+
+            // makes emplace_back() work
+            constexpr Contribution(unsigned game,
+                                   int negative_population) noexcept;
+
+            constexpr Contribution() noexcept;
+        };
+
+        using ContribIt = std::vector<Contribution>::const_iterator;
+
+        // finds the leader of the player's connected sublan
+        size_t find_set(size_t player) noexcept;
+
+        // perform a union of the sublans by rank if they were separate
+        // @return the old leaders, with the new leader first
+        std::pair<size_t, size_t> unite(size_t player1,
+                                        size_t player2) noexcept;
+
+        // merges the population contributions of what had been two sublans
+        void merge_contribs(size_t dest, size_t src);
+
+        // merges the given ranges of (game, population) contributions into
+        // auxiliary storage, removing and recording start times for games that
+        // are able to start beause they have reached their target populations
+        // @return an iterator to the end of the used portion of the aux vector
+        ContribIt merge_to_aux(ContribIt first1, ContribIt last1,
+                               ContribIt first2, ContribIt last2) noexcept;
+
+        // extra space for merging contribs_ rows during a DSU union operation
+        std::vector<Contribution> aux_;
+
+        // set leader -> (game -> population)
+        std::vector<std::vector<Contribution>> contribs_;
+
+        // player -> nonnegatve DSU parent, or negative DSU rank if set leader
+        std::vector<int> parents_or_ranks_;
+
+        // game -> negative population target, or nonneg start time if started
+        std::vector<int> pop_targets_or_start_times_;
+
+        // current time
+        int time_ {0};
+    };
+
+    DisjointPlayerSets(const std::vector<unsigned>& player_games,
+                       const unsigned game_count)
+        : aux_(static_cast<size_t>(game_count)), contribs_(player_games.size()),
+          parents_or_ranks_(player_games.size(), -1),
+          pop_targets_or_start_times_(static_cast<size_t>(game_count))
+    {
+        const auto player_count = player_games.size();
+
+        // determine how many players are needed for each game
+        for (size_t player {0u}; player != player_count; ++player) {
+            const auto game = player_games[player];
+            --pop_targets_or_start_times_[static_cast<size_t>(game)];
+        }
+
+        // start single-player games immediately
+        for (auto& elem : pop_targets_or_start_times_)
+            if (elem == -1) elem = 0;
+
+        // record players' population contributions toward multiplayer games
+        for (size_t player {0u}; player != player_count; ++player) {
+            const auto game = player_games[player];
+            if (pop_targets_or_start_times_[static_cast<size_t>(game)] != 0)
+                contribs_[player].emplace_back(game, -1);
+        }
+    }
+
+    void DisjointPlayerSets::connect(size_t player1, size_t player2)
+    {
+        // one connection per tick of the clock
+        ++_time;
+
+        // actually connect the sublans (if they are separate)
+        const auto contributors = unite(player1, player2);
+
+        // unless the sublans were already joined, merge their contributions
+        if (contributors.first != contributors.second)
+            merge_contribs(contributors.first, contributors.second);
+    }
+
+    constexpr DisjointPlayerSets::Contribution::Contribution(
+            const unsigned game, const int negative_population) noexcept
+        : game{game}, negative_population{negative_population}
+    {
+    }
+
+    constexpr DisjointPlayerSets::Contribution::Contribution() noexcept
+        : game{}, negative_population{}
+    {
+    }
+
+    size_t DisjointPlayerSets::find_set(size_t player) noexcept
+    {
+        // find the leader
+        auto leader = player;
+        while (parents_or_ranks_[leader] >= 0)
+            leader = static_cast<size_t>(parents_or_ranks_[leader]);
+
+        // compress the path
+        while (parents_or_ranks_[player] != leader) {
+            const auto parent = parents_or_ranks_[player];
+            parents_or_ranks_[player] = leader;
+            player = parent;
+        }
+
+        return leader;
+    }
+
+    std::pair<size_t, size_t> DisjointPlayerSets::unite(size_t player1,
+                                                        size_t player2) noexcept
+    {
+        // find the leaders
+        player1 = find_set(player1);
+        player2 = find_set(player2);
+
+        // if the leaders are not already the same, then perform union by rank
+        if (player1 != player2) {
+            if (parents_or_ranks_[player1] > panrents_or_ranks_[player2]) {
+                // player 2 has superior (more negative) rank; it stays leader
+                std::swap(player1, player2);
+            }
+            else if (parents_or_ranks_[player1] == parents_or_ranks_[player2]) {
+                // players have equal rank, so promote player1
+                --parents_or_ranks_[player1];
+            }
+
+            // whichever player is currently player1 remains the leader
+            parents_or_ranks_[player2] = player1;
+        }
+
+        return {player1, player2};
+    }
+
+    void DisjointPlayerSets::merge_contribs(const size_t dest, const size_t src)
+    {
+        auto& dest = contribs_[dest];
+        auto& src = contribs_[src];
+
+        if (src.empty()) return;
+
+        if (dest.empty()) {
+            std::swap(dest, src);
+            return;
+        }
+
+        const auto aux_last = merge_to_aux(std::cbegin(dest), std::cend(dest),
+                                           std::cbegin(src), std::cend(src));
+
+        src.clear();
+        src.shrink_to_fit();
+
+        dest.assign(std::cbegin(aux_), aux_last);
+    }
+
+    auto DisjointPlayerSets::merge_to_aux(
+            ContribIt first1, const ContribIt last1,
+            ContribIt first2, const ContribIt last2) noexcept -> ContribIt
+    {
+        auto auxp = std::begin(aux_);
+
+        while (first1 != last1 && first2 != last2) {
+            if (first1->game < first2->game) {
+                *auxp = *first1;
+                ++first1;
+            }
+            else if (first1->game != first2->game) {
+                *auxp = *first2;
+                ++first2;
+            } else {
+                const auto pop = first1->negative_population
+                               + first2->negative_population;
+                const auto game_index = static_cast<size_t>(first1->game);
+
+                if (pop == pop_targets_or_start_times_[game_index]) {
+                    pop_targets_or_start_times_[game_index] = time_;
+                    ++first1;
+                    ++first2;
+                    continue; // don't increment auxp (we didn't write to aux)
+                }
+
+                auxp->game = first1->game;
+                auxp->negative_population = pop;
+            }
+
+            ++auxp;
+        }
+
+        auxp = std::copy(first1, last1, auxp);
+        auxp = std::copy(first2, last2, auxp);
+        return auxp;
+    }
+}

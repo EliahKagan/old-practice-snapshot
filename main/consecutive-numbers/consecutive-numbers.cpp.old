@@ -1,0 +1,35 @@
+#include <iostream>
+#include <set>
+
+namespace {
+    std::set<int>::difference_type
+    max_contiguous_length(const std::set<int>& s)
+    {
+        std::set<int>::difference_type len {0};
+        auto prev = -1; // initialized to value disallowed in s
+
+        for (auto q = s.cbegin(), p = q; q != s.cend(); ++q) {
+            if (++prev != *q) {
+                const auto d = q - p;
+
+            }
+        }
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        std::set<int> s;
+
+        auto n = 0;
+        for (std::cin >> n; n > 0; --n) {
+            auto k = 0;
+            std::cin >> k;
+            s.insert(k);
+        }
+
+        std::cout << max_contiguous_length(s) << '\n';
+    }
+}

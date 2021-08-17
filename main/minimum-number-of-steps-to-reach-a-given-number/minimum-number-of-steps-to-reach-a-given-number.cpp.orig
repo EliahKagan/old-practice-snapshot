@@ -1,0 +1,129 @@
+#include <iostream>
+#include <limits>
+#include <queue>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace {
+    class CannotGoException : public std::out_of_range {
+    public:
+        CannotGoException(const char* direction, int pos, int reach);
+
+    private:
+        static std::string build_message(const char* direction,
+                                         int pos, int reach);
+    };
+
+    CannotGoException::CannotGoException(const char* const direction,
+                                         const int pos, const int reach)
+        : std::out_of_range{build_message(direction, pos, reach)}
+    {
+    }
+
+    std::string CannotGoException::build_message(
+            const char* const direction, const int pos, const int reach)
+    {
+        std::ostringstream out;
+
+        out << "Can't go " << direction
+            << " from " << pos << " by " << reach << '.';
+
+        return out.str();
+    }
+}
+
+namespace {
+    class UnreachedPositionsException : public std::logic_error {
+    public:
+        // pass the number of unreached positions as the unreached parameter
+        explicit UnreachedPositionsException(int unreached);
+
+    private:
+        static std::string build_message(int unreached);
+    };
+
+    UnreachedPositionsException::UnreachedPositionsException(
+            const int unreached) : std::logic_error{build_message(unreached)}
+    {
+    }
+
+    std::string UnreachedPositionsException::build_message(int unreached)
+    {
+        std::ostringstream out;
+        out << unreached << " positions were not reached.";
+        return out.str();
+    }
+}
+
+namespace {
+    using Index = std::vector<int>::size_type;
+
+    // Subtracts reach from pos, but throws if an overflow would occur.
+    inline int go_left(const int pos, const int reach)
+    {
+        if (pos < std::numeric_limits<int>::min() + reach)
+            throw CannotGoException{"left", pos, reach};
+
+        return pos - reach;
+    }
+
+    // Adds reach to pos, but throws if an overflow would occur.
+    inline int go_right(const int pos, const int reach)
+    {
+        if (pos > std::numeric_limits<int>::max() - reach)
+            throw CannotGoException{"right", pos, reach};
+
+        return pos + reach;
+    }
+
+    inline void enqueue_reach(std::queue<int>& q,
+                              const int pos, const int reach)
+    {
+        q.push(go_left(pos, reach));
+        q.push(go_right(pos, reach));
+    }
+
+    std::vector<int> get_steps_to_all_destinations(const int max_dest)
+    {
+        static constexpr auto unknown = -1;
+        auto unreached = max_dest + 1;
+        std::vector<int> dists (static_cast<Index>(unreached), unknown);
+
+        std::queue<int> q;
+        q.push(0);
+
+        for (auto cur_dist = 0; !q.empty(); ++cur_dist) {
+            for (auto eqdistant = q.size(); eqdistant != 0u; --eqdistant) {
+                const auto pos = q.front();
+                q.pop();
+
+                if (0 <= pos && pos <= max_dest) {
+                    const auto i = static_cast<Index>(pos);
+                    if (dists[i] != unknown) continue;
+
+                    dists[i] = cur_dist;
+                    if (--unreached == 0) return dists;
+                }
+
+                enqueue_reach(q, pos, cur_dist + 1);
+            }
+        }
+
+        throw UnreachedPositionsException{unreached};
+    }
+}
+
+int main()
+{
+    constexpr auto max_dest = 1000;
+    const auto dists = get_steps_to_all_destinations(max_dest);
+
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        Index d {};
+        std::cin >> d;
+        std::cout << dists.at(d) << '\n';
+    }
+}

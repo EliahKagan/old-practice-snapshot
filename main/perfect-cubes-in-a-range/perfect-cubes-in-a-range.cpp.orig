@@ -1,0 +1,17 @@
+#include <cmath>
+#include <iostream>
+
+int main()
+{
+    using namespace std;
+
+    auto t = 0;
+    for (cin >> t; t > 0; --t) {
+        auto a = 0., b = 0.;
+        cin >> a >> b;
+        const auto n = lround(floor(cbrt(b)) - ceil(cbrt(a))) + 1L;
+
+        if (n > 0L) cout << n << '\n';
+        else cout << "No\n";
+    }
+}

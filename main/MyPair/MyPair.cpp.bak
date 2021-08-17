@@ -1,0 +1,59 @@
+#include <cstddef>
+#include <iostream>
+#include <functional>
+#include <unordered_set>
+
+namespace {
+    // In real life, consider std::tuple<T, T> or std::pair<T, T> instead.
+    template<typename T>
+    struct MyPair {
+        T first, second;
+
+        constexpr MyPair() : first{}, second{} { }
+        constexpr MyPair(const T& fst, const T& snd) : first{fst}, second{snd} { }
+    };
+
+    template<typename T>
+    constexpr bool operator==(const MyPair<T>& lhs, const MyPair<T>& rhs)
+    {
+        return lhs.first == rhs.first && lhs.second == rhs.second;
+    }
+
+    template<typename T>
+    constexpr bool operator!=(const MyPair<T>& lhs, const MyPair<T>& rhs)
+    {
+        return !(lhs == rhs);
+    }
+}
+
+namespace std {
+    template<typename T>
+    struct hash<MyPair<T>> {
+        std::size_t operator()(const MyPair<T>& v)
+        {
+            // See rationale at https://stackoverflow.com/a/2816747 by
+            // https://stackoverflow.com/users/21499/dr-hans-peter-störr.
+            // Note that this is a somewhat different use case because the
+            // values being multiplied here are themselves hash codes, possibly
+            // generated in a similar way, and because Störr's testing was with
+            // a Java virtual machines. If this yields more hash collisions
+            // than expected, blame me, not him!
+            static constexpr std::size_t hashing_multiplier{92'821};
+            return m_hash(v.first) ^ m_hash(v.second) * hashing_multiplier;
+        }
+
+    private:
+        hash<T> m_hash {};
+    };
+}
+
+int main()
+{
+    MyPair<int> ij, hk {10, 20};
+    ij = hk;
+
+    std::cout << std::hash<int>{}(0) << '\n';
+    std::cout << std::hash<int>{}(1) << '\n';
+    std::cout << std::hash<MyPair<int>>{}(MyPair<int>{0, 1}) << '\n';
+    std::cout << (std::hash<int>{}(0) ^ std::hash<int>{}(1) * 92'821) << '\n';
+}

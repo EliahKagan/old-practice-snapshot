@@ -1,0 +1,146 @@
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+
+final class Node<E> {
+    static <E> Node<E> Create(final E key, final Node<E> left,
+                                           final Node<E> right) {
+        return new Node<E>(key, left, right);
+    }
+
+    static <E> Node<E> Create(final E key) {
+        return new Node<E>(key, null, null);
+    }
+
+    E key;
+    Node<E> left, right;
+
+    private Node(final E key, final Node<E> left, final Node<E> right) {
+        this.key = key;
+        this.left = left;
+        this.right = right;
+    }
+}
+
+final class Traverse {
+    static <E> List<E> levelOrder(final Node<E> root) {
+        if (root == null) return Collections.emptyList();
+
+        var ret = new ArrayList<E>();
+
+        var queue = new ArrayDeque<Node<E>>();
+        for (queue.add(root); !queue.isEmpty(); ) {
+            var node = queue.remove();
+            ret.add(node.key);
+
+            if (node.left != null) queue.add(node.left);
+            if (node.right != null) queue.add(node.right);
+        }
+
+        return ret;
+    }
+
+    static <E> List<E> preOrder(final Node<E> root) {
+        if (root == null) return Collections.emptyList();
+
+        var ret = new ArrayList<E>();
+
+        var stack = new ArrayDeque<Node<E>>();
+        for (stack.push(root); !stack.isEmpty(); ) {
+            var node = stack.pop();
+            ret.add(node.key);
+
+            // Push right then left, so we can pop left then right.
+            if (node.right != null) stack.push(node.right);
+            if (node.left != null) stack.push(node.left);
+        }
+
+        return ret;
+    }
+
+    static <E> List<E> inOrder(final Node<E> root) {
+        var stack = new ArrayDeque<Node<E>>();
+
+        Consumer<Node<E>> goLeft = node -> {
+            for (; node != null; node = node.left) stack.push(node);
+        };
+
+        var ret = new ArrayList<E>();
+
+        for (goLeft.accept(root); !stack.isEmpty(); ) {
+            var node = stack.pop();
+            ret.add(node.key);
+            goLeft.accept(node.right);
+        }
+
+        return ret;
+    }
+
+    static <E> List<E> postOrder(final Node<E> root) {
+        class State {
+            State(final Node<E> node) { this.node = node; }
+            final Node<E> node;
+            boolean retreated = false;
+        }
+
+        var stack = new ArrayDeque<State>();
+
+        Consumer<Node<E>> goLeft = node -> {
+            for (; node != null; node = node.left) stack.push(new State(node));
+        };
+
+        var ret = new ArrayList<E>();
+
+        for (goLeft.accept(root); !stack.isEmpty(); ) {
+            var state = stack.element();
+
+            if (state.retreated) {
+                ret.add(state.node.key);
+                stack.pop();
+            } else {
+                state.retreated = true;
+                goLeft.accept(state.node.right);
+            }
+        }
+
+        return ret;
+    }
+
+    private Traverse() { throw new AssertionError(); }
+}
+
+final class UnitTest {
+    public static void main(final String[] args) {
+        var root = makeTestTree();
+
+        print("Level order", Traverse.levelOrder(root));
+        print("Preorder", Traverse.preOrder(root));
+        print("In-order", Traverse.inOrder(root));
+        print("Postorder", Traverse.postOrder(root));
+    }
+
+    private static Node<String> makeTestTree() {
+        //               Dale
+        //          /           \
+        //       Bob             Freya
+        //      /   \           /     \
+        //   Alice   Carl   Esther   Gordon
+
+        var left = Node.Create("Bob", Node.Create("Alice"),
+                                      Node.Create("Carl"));
+
+        var right = Node.Create("Freya", Node.Create("Esther"),
+                                         Node.Create("Gordon"));
+
+        return Node.Create("Dale", left, right);
+    }
+
+    private static void print(final String label,
+                              final Iterable<? extends CharSequence> elems) {
+        System.out.format("%15s:  %s%n", label, String.join(" ", elems));
+    }
+
+    private UnitTest() { throw new AssertionError(); }
+}

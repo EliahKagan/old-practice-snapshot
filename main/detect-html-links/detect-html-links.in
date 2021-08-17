@@ -1,0 +1,13 @@
+<div class="summary">
+        <h3><a href="/questions/224115/dc-motors-not-spinning-at-same-rpm" class="question-hyperlink">DC motors not spinning at same RPM?</a></h3>
+        <div class="excerpt">
+            I'm attempting to make a quadcopter using an Arduino board (Blend Micro). I've wired everything up as such:  When I run the following code just to test if everything is working, the motors do not spin ...
+        </div>          
+        <div class="tags t-arduino t-transistors t-dc-motor t-drone">
+            <a href="/questions/tagged/arduino" class="post-tag" title="show questions tagged &#39;arduino&#39;" rel="tag">arduino</a> <a href="/questions/tagged/transistors" class="post-tag" title="show questions tagged &#39;transistors&#39;" rel="tag">transistors</a> <a href="/questions/tagged/dc-motor" class="post-tag" title="show questions tagged &#39;dc-motor&#39;" rel="tag">dc-motor</a> <a href="/questions/tagged/drone" class="post-tag" title="show questions tagged &#39;drone&#39;" rel="tag">drone</a> 
+        </div>
+        <div class="started fr">
+            <div class="user-info ">
+    <div class="user-action-time">
+        asked <span title="2016-03-22 17:40:04Z" class="relativetime">12 mins ago</span>
+    </div>

@@ -1,0 +1,258 @@
+// euler8.cs - Project Euler problem 8: Largest product in a series
+// To build:   csc /r:System.Numerics.dll euler8.cs   (or: "mcs ...")
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+using System.Numerics;
+using System.Text.RegularExpressions;
+
+[assembly:System.Reflection.AssemblyVersion("0.1.0.2")]
+
+[Serializable] internal class UnreachableException : NotSupportedException { }
+
+internal sealed class Iterator<T> : IDisposable where T : struct {
+    public Iterator(IEnumerable<T> items)
+    {
+        enumerator = items.GetEnumerator();
+        MoveNext();
+    }
+
+    public void MoveNext()
+    {
+        if (defined) defined = enumerator.MoveNext();
+    }
+
+    public T? Current
+    {
+        get {
+            return defined ? enumerator.Current : (T?)null;
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        enumerator.Dispose();
+    }
+
+    private IEnumerator<T> enumerator;
+    private bool defined = true;
+}
+
+internal static class Colorize {
+    internal static bool Defunct { get; private set; } = false;
+
+    internal static void Diagnostic()
+    {
+        if (Defunct) {
+            Console.Error.WriteLine("{0}: warning: {1}",
+                    Environment.GetCommandLineArgs()[0],
+                    "color highlighting did not appear correctly");
+        }
+    }
+
+    internal static void Off()
+    {
+        if (highlight != Highlight.Disabled) Set(Highlight.Disabled);
+    }
+
+    internal static void On()
+    {
+        Set(highlight == Highlight.Primary ? Highlight.Secondary
+                                           : Highlight.Primary);
+    }
+
+    private enum Highlight { Disabled, Primary, Secondary }
+
+    private static Highlight highlight = Highlight.Disabled;
+
+    static Colorize()
+    {
+        Apply();
+    }
+
+    private static void Apply()
+    {
+        if (Defunct) return;
+
+        try {
+            switch (highlight) {
+            case Highlight.Disabled:
+                Console.ForegroundColor = ConsoleColor.Gray;
+                return;
+
+            case Highlight.Primary:
+                Console.ForegroundColor = ConsoleColor.Red;
+                return;
+
+            case Highlight.Secondary:
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                return;
+            }
+        }
+        catch (ArgumentException) { }
+        catch (System.Security.SecurityException) { }
+        catch (System.IO.IOException) { }
+
+        Defunct = true;
+    }
+
+    private static void Set(Highlight h)
+    {
+        highlight = h;
+        Apply();
+    }
+}
+
+internal static class ColorConsole {
+    internal static void Off(bool newline = false)
+    {
+        length = 0;
+        Colorize.Off();
+        if (newline) Console.WriteLine();
+        Colorize.Diagnostic();
+    }
+
+    internal static void On(int length)
+    {
+        ColorConsole.length = length;
+        Colorize.On();
+    }
+
+    internal static void Write(char value)
+    {
+        if (length == 0)
+            Colorize.Off();
+        else
+            --length;
+
+        Console.Write(value);
+    }
+
+    private static int length = 0;
+}
+
+internal static class DigitStringExtensions {
+    internal static IEnumerable<int> FindMaxProducts(
+            this string digits, int length, out BigInteger product)
+    {
+        Contract.Assert(digits != null && digits.All(char.IsDigit));
+        Contract.Assert(0 < length && length <= digits.Length);
+
+        product = BigInteger.Zero;
+        var indices = new List<int>();
+
+        foreach (var i in Enumerable.Range(0, digits.Length - length + 1)) {
+            var p = Product(digits.Substring(i, length));
+
+            if (p >= product) {
+                if (p != product) {
+                    product = p;
+                    indices.Clear();
+                }
+
+                indices.Add(i);
+            }
+        }
+
+        Contract.Assert(indices.Any());
+        return indices;
+    }
+
+    private static BigInteger Product(string digits)
+    {
+        Contract.Assert(digits != null && digits.All(char.IsDigit));
+
+        var p = BigInteger.One;
+
+        foreach (var i in Enumerable.Range(0, digits.Length))
+            p *= BigInteger.Parse(digits.Substring(i, 1));
+
+        return p;
+    }
+}
+
+internal static class Program {
+    private const string Digits =
+@"73167176531330624919225119674426574742355349194934
+96983520312774506326239578318016984801869478851843
+85861560789112949495459501737958331952853208805511
+12540698747158523863050715693290963295227443043557
+66896648950445244523161731856403098711121722383113
+62229893423380308135336276614282806444486645238749
+30358907296290491560440772390713810515859307960866
+70172427121883998797908792274921901699720888093776
+65727333001053367881220235421809751254540594752243
+52584907711670556013604839586446706324415722155397
+53697817977846174064955149290862569321978468622482
+83972241375657056057490261407972968652414535100474
+82166370484403199890008895243450658541227588666881
+16427171479924442928230863465674813919123162824586
+17866458359124566529476545682848912883142607690042
+24219022671055626321111109370544217506941658960408
+07198403850962455444362981230987879927244284909188
+84580156166097919133875499200524063689912560717606
+05886116467109405077541002256983155200055935729725
+71636269561882670428252483600823257530420752963450";
+
+    private static int? Parse(string[] args, int min, int max)
+    {
+        Contract.Assert(args != null && min <= max);
+
+        if (!args.Any()) return null;
+
+        try {
+            if (args.Length == 1) {
+                var n = int.Parse(args[0]);
+                if (min <= n && n <= max) return n;
+            }
+        }
+        catch (FormatException) { }
+        catch (OverflowException) { }
+
+        Console.Error.WriteLine("Usage:  {0} [length]",
+                                Environment.GetCommandLineArgs()[0]);
+        Environment.Exit(1);
+
+        throw new UnreachableException();
+    }
+
+    private static void PrintHighlighted(IEnumerable<int> indices, int length)
+    {
+        using (var it = new Iterator<int>(indices)) {
+            var pos = 0;
+            foreach (var c in Digits) {
+                if (!char.IsDigit(c)) {
+                    Console.Write(c);
+                    continue;
+                }
+
+                if (pos == it.Current) {
+                    ColorConsole.On(length);
+                    it.MoveNext();
+                }
+
+                ColorConsole.Write(c);
+                ++pos;
+            }
+        }
+
+        ColorConsole.Off(true);
+    }
+
+    private static void Main(string[] args)
+    {
+        var digits = Regex.Replace(Digits, @"[^\d]", "");
+        var length = Parse(args, 1, digits.Length) ?? 13;
+
+        BigInteger product;
+        var indices = digits.FindMaxProducts(length, out product);
+
+        PrintHighlighted(indices, length);
+
+        Console.WriteLine();
+        Console.WriteLine("Largest product of {0} adjacent digit{1} is {2}.",
+                          length, (length == 1 ? "" : "s"), product);
+    }
+}

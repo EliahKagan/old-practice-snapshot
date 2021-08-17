@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+$VERBOSE = true
+
+# Adjust these constants to set the range of operand values.
+MIN_FACTOR = 1
+MAX_FACTOR = 12
+
+FACTORS = MIN_FACTOR..MAX_FACTOR
+
+FACTORS.each do |x|
+  FACTORS.each { |y| printf ' %3d', x * y }
+  puts
+end

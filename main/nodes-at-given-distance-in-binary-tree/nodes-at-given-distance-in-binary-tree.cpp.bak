@@ -1,0 +1,41 @@
+/* A binary Tree node
+struct node
+{
+    int data;
+    struct node *left, *right;
+}; */
+
+namespace {
+    stack<node*> dfs(node* root, node* target)
+    {
+        if (target == nullptr)
+            throw invalid_argument{"target node cannot be null"};
+        
+        stack<node*> s;
+        for (s.push(root); !s.empty(); s.pop()) {
+            if (s.top() == nullptr) continue;
+            
+            if (s.top() == target) break;
+            
+            s.push(s.top()->left);
+            s.push(s.top()->right);
+        }
+        
+    }
+}
+
+/* Recursive function to print all the nodes at distance k in the
+   tree (or subtree) rooted with given root. See  */
+void printkdistanceNodeDown(node* root, int k)
+{
+// Your code here
+}
+
+/* Prints all nodes at distance k from a given target node.
+ The k distant nodes may be upward or downward.  This function
+ Returns distance of root from target node, it returns -1 if target
+ node is not present in tree rooted with root. */
+int printkdistanceNode(node* root, node* target , int k)
+{
+    
+}

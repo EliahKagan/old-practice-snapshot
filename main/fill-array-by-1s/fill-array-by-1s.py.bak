@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+
+from itertools import chain
+
+def first_not_of(a, key):
+    '''Returns an index to the first element of a not equal to key.'''
+    i = 0
+    for x in a:
+        if x != key:
+            return i
+        i += 1
+
+    return None
+
+def last_not_of(a, key):
+    '''Returns and index to the last element of a not equal to key.'''
+    i = len(a)
+    while i != 0:
+        i -= 1
+        if a[i] != key:
+            return i
+
+    return None
+
+
+def strip(a, key):
+    '''Returns a tuple (stripped, left, right) where left is the first index
+    of an item other than key in a, right is one greater than the last index of
+    key in a, and stripped is a[left:right].'''
+    left = first_not_of(a, key)
+
+    if left is None:
+        return [], None, None
+
+    right = last_not_of(a, key) + 1
+    return (a[left:right], left, right)
+
+def run_lengths(a, key):
+    '''Returns an iterable of lengths of runs of key in an iterable, a.'''
+    cur = 0
+
+    for x in a:
+        if x == key:
+            cur += 1
+        else if cur != 0:
+            yield cur
+            cur = 0
+
+    if cur != 0:
+        yield cur
+
+def fill_time(a):
+    '''Returns the number of steps it takes to fill an array of zeros with
+    nonzero values, where in each step all adjacent positions of nonzeros
+    become nonzero. Astonishes you by returning 0 for infinity.'''
+    b, i, j = strip(a, key)
+
+    if i is None:
+        return 0
+
+    edges = (i, len(a) - j)
+    center =
+
+    #return (max_run_length(a, 0) + 1) // 2
+
+for _ in range(int(input())):
+    input() # don't need n
+    a = list(map(int, input().split()))
+    print(fill_time(a))

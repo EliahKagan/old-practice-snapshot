@@ -1,0 +1,50 @@
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+namespace {
+    std::vector<int> get()
+    {
+        std::vector<int>::size_type n {};
+        std::cin >> n;
+
+        std::vector<int> a;
+        for (a.reserve(n); n != 0u; --n) {
+            int x {};
+            std::cin >> x;
+            a.push_back(x);
+        }
+
+        return a;
+    }
+
+    void put_subset_sums(const std::vector<int>& a)
+    {
+        std::cout << 0;
+
+        const auto n = 1 << static_cast<int>(a.size());
+        for (auto i = 1; i != n; ++i) {
+            auto bits = i, sum = 0;
+
+            for (std::vector<int>::size_type j {0u}; j != a.size(); ++j) {
+                if ((bits & 1) != 0) sum += a[j]; //-V127 a[j]<101, a.size()<11
+                bits >>= 1;
+            }
+
+            std::cout << ' ' << sum;
+        }
+
+        std::cout << '\n';
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        auto a = get();
+        std::sort(std::begin(a), std::end(a));
+        put_subset_sums(a);
+    }
+}

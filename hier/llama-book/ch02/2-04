@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+
+if (-t STDIN) { print '1st factor> ' }
+my $x = <>;
+
+if (-t STDIN) { print '2nd factor> ' }
+my $y = <>;
+
+say $x * $y;

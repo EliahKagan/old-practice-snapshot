@@ -1,0 +1,3 @@
+#!/bin/sh
+
+VISUAL=gvim exec "$(dirname "$0")/new" "$@"

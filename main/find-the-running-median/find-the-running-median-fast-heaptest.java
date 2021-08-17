@@ -1,0 +1,108 @@
+import java.util.Scanner;
+import java.util.StringJoiner;
+
+abstract class Heap {
+    public Heap(final int capacity)
+    {
+        elems = new int[capacity];
+    }
+    
+    public final int capacity() { return elems.length; }
+    public final int size() { return last + 1; }
+    
+    public final int top() { return elems[0]; }
+    
+    public final int pop()
+    {
+        final int ret = elems[0];
+        
+        elems[0] = elems[last--];
+        heapifyDown();
+        
+        return ret;
+    }
+    
+    public final void push(final int x)
+    {
+        elems[++last] = x;
+        heapifyUp();
+    }
+    
+    protected abstract boolean comp(int x, int y); // e.g., < for min-heap
+    
+    private final int[] elems;
+    private int last = -1; // index at the last element
+    
+    private void heapifyDown()
+    {
+        for (int i = 0; hasLeft(i); ) {
+            // check which of the current element's children is the "least"
+            final int j = (hasRight(i) && comp(rightVal(i), leftVal(i))
+                            ? right(i)
+                            : left(i));
+            
+            if (!comp(elems[j], elems[i])) break; // compare it with that one
+            i = swap(i, j);
+        }
+    }
+    
+    private void heapifyUp()
+    {
+        for (int i = last; hasUp(i) && comp(elems[i], upVal(i)); )
+            i = swap(i, up(i));
+    }
+    
+    private int left(final int i) { return i * 2 + 1; }  // left child index
+    private int right(final int i) { return i * 2 + 2; } // right child index
+    private int up(final int i) { return (i - 1) / 2; }  // parent index
+    
+    private boolean hasLeft(final int i) { return left(i) <= last; }
+    private boolean hasRight(final int i) { return right(i) <= last; }
+    private boolean hasUp(final int i) { return i != 0; }
+    
+    private int leftVal(final int i) { return elems[left(i)]; }   // left child
+    private int rightVal(final int i) { return elems[right(i)]; } // rt. child
+    private int upVal(final int i) { return elems[up(i)]; }       // parent
+    
+    private int swap(int i, int j) // swaps ith and jth elements and returns j
+    {
+        final int tmp = elems[i];
+        elems[i] = elems[j];
+        elems[j] = tmp;
+        
+        return j;
+    }
+}
+
+final class MinHeap extends Heap {
+    public MinHeap(final int capacity) { super(capacity); }
+    
+    @Override
+    protected boolean comp(final int x, final int y) { return x < y; }
+}
+
+final class MaxHeap extends Heap {
+    public MaxHeap(final int capacity) { super(capacity); }
+    
+    @Override
+    protected boolean comp(final int x, final int y) { return x > y; }
+}
+
+final class Solution {
+    public static void main(final String[] args)
+    {
+        final Heap h = new MinHeap(100);
+        
+        try (final Scanner in = new Scanner(System.in);
+                final Scanner s = new Scanner(in.nextLine())) {
+            while (s.hasNextInt() && h.size() != h.capacity())
+                h.push(s.nextInt());
+        }
+        
+        final StringJoiner sj = new StringJoiner(" ");
+        while (h.size() != 0) sj.add(String.valueOf(h.pop()));
+        System.out.println(sj);
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

@@ -1,0 +1,44 @@
+// This is really an "outside view," rather than a top view!
+
+//Structure of binary tree
+/*struct Node
+{
+    int data;
+    struct Node* left;
+    struct Node* right;
+};*/
+
+namespace {
+    inline void print(struct Node* node)
+    {
+        cout << node->data << ' ';
+    }
+    
+    void topViewLeft(struct Node* root)
+    {
+        if (root != nullptr) {
+            topViewLeft(root->left);
+            print(root);
+        }
+    }
+    
+    void topViewRight(struct Node* root)
+    {
+        if (root != nullptr) {
+            topViewLeft(root->right);
+            print(root);
+        }
+    }
+}
+
+// function should print the topView of the binary tree
+void topView(struct Node *root)
+{
+    if (root != nullptr) {
+        topViewLeft(root->left);
+        print(root);
+        topViewRight(root->right);
+    }
+    
+    cout << '\n';
+}

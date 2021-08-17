@@ -1,0 +1,76 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.1.0")]
+
+internal static class Arith {
+    internal static int Sqrt32(this int n)
+            => Convert.ToInt32(Math.Floor(Math.Sqrt(n)));
+
+    internal static long Sqrt64(this long n)
+            => Convert.ToInt64(Math.Floor(Math.Sqrt(n)));
+
+    internal static int Sqrt64To32(this long n)
+            => Convert.ToInt32(Math.Floor(Math.Sqrt(n)));
+
+    private static IEnumerable<long> Sieve(int n) // yields primes up to n
+    {
+        var a = new bool[n + 1]; // false means not marked as composite
+    
+        var imax = Sqrt32(n);
+        for (var i = 3; i <= imax; i += 2) {
+            if (!a[i]) {
+                var jstep = i * 2;
+                for (var j = i * i; j <= n; j += jstep) a[j] = true;
+            }
+        }
+    
+        yield return 2L;
+        for (var k = 3; k <= n; k += 2)
+            if (!a[k]) yield return k; // int-to-long conversion happens here
+    }
+
+    internal static List<long> Primes(this int n) // primes to n, as List<>
+            => Sieve(n).ToList();
+
+    // Computes the largest prime factor of n > 1, provided primes contains at
+    // least all prime numbers <= sqrt(n) and no non-prime numbers.
+    internal static long MaxPrimeDivisorOf(this IEnumerable<long> primes,
+                                           long n)
+    {
+        while ((n & 1L) == 0L) n >>= 1; // optimization to remove factors of 2
+        if (n == 1L) return 2L;
+
+        var sqrt = Sqrt64(n);
+
+        foreach (var p in primes.Skip(1).TakeWhile(q => q <= sqrt)) {
+            if (n % p != 0L) continue;
+
+            do n /= p;
+            while (n % p == 0L);
+
+            if (n == 1L) return p;
+        }
+
+        return n; // what remains must be a single prime factor > sqrt(orig. n)
+    }
+}
+
+internal static class Solution {
+    private static List<long> ReadValues()
+    {
+        var t = int.Parse(Console.ReadLine());
+        var a = new List<long>(t);
+        while (t-- > 0) a.Add(long.Parse(Console.ReadLine()));
+        return a;
+    }
+
+    private static void Main()
+    {
+        var values = ReadValues();
+        var primes = values.Max().Sqrt64To32().Primes();
+
+        values.ForEach(n => Console.WriteLine(primes.MaxPrimeDivisorOf(n)));
+    }
+}

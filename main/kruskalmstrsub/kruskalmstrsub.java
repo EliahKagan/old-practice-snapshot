@@ -1,0 +1,93 @@
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Scanner;
+import java.util.stream.IntStream;
+
+final class DisjointSets {
+    /** Creates hte specified number of disjoint singletons.
+     * @param count     The number of singleton sets to make. */
+    DisjointSets(final int count)
+    {
+        _elems = new int[count];
+        Arrays.fill(_elems, -1);
+    }
+
+    /** Joins the set that has i with the set that has j.
+     * @param i     An element of the first set to be joined.
+     * @param j     An element of the second set to be joined.
+     * @return      True if i and j were not already in the same set. */
+    boolean union(int i, int j)
+    {
+        // Find the ancestors and check if they're already the same.
+        i = findSet(i);
+        j = findSet(j);
+        if (i == j) return false;
+
+        // Unite the sets by rank.
+        if (_elems[i] > _elems[j]) {
+            _elems[i] = j; // j has superior (more negative) rank
+        } else {
+            // if i and j have equal rank, then promote i
+            if (_elems[i] == _elems[j]) --_elems[i];
+
+            _elems[j] = i; // i has superior (more negative) rank
+        }
+
+        return true;
+    }
+
+    /** Finds the representative element of the set with i.
+     * @param i     The member whose set representative is sought.
+     * @return      The representative (ancestor) element. */
+    private int findSet(int i)
+    {
+        // Find the ancestor.
+        int j = i;
+        while (_elems[j] >= 0) j = _elems[j];
+
+        // Compress the path.
+        while (i != j) {
+            final int p = _elems[i];
+            _elems[i] = j;
+            i = p;
+        }
+
+        return j;
+    }
+
+    private final int[] _elems;
+}
+
+final class Edge {
+    Edge(final Scanner sc)
+    {
+        this.x = sc.nextInt();
+        this.y = sc.nextInt();
+        this.r = sc.nextInt();
+    }
+
+    final int x, y, r;
+}
+
+final class Solution {
+    public static void main(final String[] args)
+    {
+        try (final Scanner sc = new Scanner(System.in)) {
+            final int v = sc.nextInt(), e = sc.nextInt();
+
+            // make one extra disjoint set, because we're not using 0
+            final DisjointSets sets = new DisjointSets(v + 1);
+
+            System.out.println(
+                    IntStream.range(0, e)
+                      .mapToObj(k -> new Edge(sc))
+                      .sorted(Comparator.comparingInt((Edge edge) -> edge.r)
+                                .thenComparingInt(edge -> edge.x + edge.y))
+                      .filter(edge -> sets.union(edge.x, edge.y))
+                      .mapToInt(edge -> edge.r)
+                      .sum());
+        }
+    }
+
+    private Solution() { throw new AssertionError(); }
+}

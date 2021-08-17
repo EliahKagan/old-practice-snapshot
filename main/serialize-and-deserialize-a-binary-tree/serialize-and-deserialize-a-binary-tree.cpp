@@ -1,0 +1,213 @@
+#include "serialize-and-deserialize-a-binary-tree.h" //#include <bits/stdc++.h>
+using namespace std;
+
+/* A binary tree node has data, pointer to left child
+   and a pointer to right child */
+struct Node
+{
+    int data;
+    struct Node* left;
+    struct Node* right;
+};
+
+/* Helper function that allocates a new node with the
+   given data and NULL left and right pointers. */
+struct Node* newNode(int data)
+{
+  struct Node* node = new Node;
+  node->data = data;
+  node->left = NULL;
+  node->right = NULL;
+
+  return(node);
+}
+
+void serialize(Node *root,vector<int> &);
+
+
+
+Node * deSerialize(vector<int> &);
+
+/* Computes the number of nodes in a tree. */
+int height(struct Node* node)
+{
+  if (node==NULL)
+    return 0;
+  else
+    return 1 + max(height(node->left), height(node->right));
+}
+
+void inorder(Node *root)
+{
+    if (root == NULL)
+       return;
+    inorder(root->left);
+    cout << root->data << " ";
+    inorder(root->right);
+}
+
+/* Driver program to test size function*/
+int main()
+{
+  int t;
+  scanf("%d\n", &t);
+  while (t--)
+  {
+     map<int, Node*> m;
+     int n;
+     scanf("%d",&n);
+     int N = n;
+     struct Node *root = NULL;
+     struct Node *child;
+     while (n--)
+     {
+        Node *parent;
+        char lr;
+        int n1, n2;
+        scanf("%d %d %c", &n1, &n2, &lr);
+
+        if (m.find(n1) == m.end())
+        {
+           parent = newNode(n1);
+           m[n1] = parent;
+           if (root == NULL)
+             root = parent;
+        }
+        else
+           parent = m[n1];
+
+        child = newNode(n2);
+        if (lr == 'L')
+          parent->left = child;
+        else
+          parent->right = child;
+        m[n2]  = child;
+     }
+    vector<int> A;
+    A.clear();
+    serialize(root,A);
+  //  for(int i=0;i<A.size();i++)
+    //    cout<<A[i]<<" ";
+      //  cout<<endl;
+    // inorder(root);
+     //cout<<endl;
+    Node *tree_made = deSerialize(A);
+    inorder(tree_made);
+    cout<<endl;
+  }
+  return 0;
+}
+
+/* A binary tree node has data, pointer to left child
+   and a pointer to right child  
+struct Node
+{
+    int data;
+    Node* left;
+    Node* right;
+}; */
+
+namespace {
+    constexpr auto recordSize = 4;
+    
+    // helper function for serialize()
+    unordered_map<Node *, int> createNodeIndexMap(Node *root)
+    {
+        unordered_map<Node *, int> node_index_map;
+        auto count = 0;
+        
+        queue<Node *> q;
+        for (q.push(root); !q.empty(); ) {
+            root = q.front();
+            q.pop();
+            if (root == nullptr) continue;
+            
+            node_index_map.emplace(root, count++);
+            
+            q.push(root->left);
+            q.push(root->right);
+        }
+        
+        return node_index_map;
+    }
+    
+    
+    // helper function for deSerialize()
+    unordered_map<int, Node *> createIndexNodeMap(const size_t dataLength)
+    {
+        unordered_map<int, Node *> index_node_map;
+        
+        const auto count = static_cast<int>(dataLength) / recordSize + 1; 
+        for (auto i = 0; i != count; ++i)
+            index_node_map.emplace(i, new Node{0, nullptr, nullptr});
+        
+        return index_node_map;
+    }
+    
+    // helper function for deSerialize()
+    inline Node *&childAt(Node *const parent, const int side)
+    {
+        switch (static_cast<char>(side)) {
+        case 'L':
+            return parent->left;
+        
+        case 'R':
+            return parent->right;
+            
+        default:
+            throw invalid_argument{"side specifier must be 'L' or 'R'"};
+        }
+    }
+}
+
+/*this  function serializes 
+the binary tree and stores 
+it in the vector A*/
+void serialize(Node *root, vector<int> &a)
+{
+    if (root == nullptr) return;
+    a.push_back(root->data);
+    
+    const auto indices = createNodeIndexMap(root);
+    queue<Node *> q;
+    
+    const auto process = [&](Node *const child, const char side) {
+        if (child == nullptr) return;
+        
+        a.push_back(indices.at(root));  // parent index
+        a.push_back(indices.at(child)); // child index
+        a.push_back(child->data);       // child data
+        a.push_back(side);              // left ('L') or right ('R') child
+        
+        q.push(child);
+    };
+    
+    for (q.push(root); !q.empty(); ) {
+        root = q.front();
+        q.pop();
+        
+        process(root->left, 'L');
+        process(root->right, 'R');
+    }
+}
+
+/*this function deserializes
+ the serialized vector A*/
+Node *deSerialize(vector<int> &a)
+{
+    if (a.empty()) return nullptr;
+    
+    if (a.size() % recordSize != 1)
+        throw invalid_argument{"serialized data is of the wrong size"};
+    
+    const auto nodes = createIndexNodeMap(a.size());
+    nodes.at(0)->data = a.front();
+    
+    for (auto p = ++a.cbegin(); p != a.cend(); ) {
+        const auto parent = nodes.at(*p++), child = nodes.at(*p++);
+        child->data = *p++;
+        childAt(parent, *p++) = child;
+    }
+    
+    return nodes.at(0);
+}

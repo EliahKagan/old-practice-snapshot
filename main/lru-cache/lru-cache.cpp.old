@@ -1,0 +1,198 @@
+#include "lru-cache.h" //#include<bits/stdc++.h>
+using namespace std;
+class LRUCache
+{
+public:
+    LRUCache(int);
+
+    int get(int);
+
+    void set(int, int);
+};
+
+int main()
+{
+    int t;
+    cin >> t;
+    while (t--)
+    {
+        int n;
+        cin >> n;
+        LRUCache *l = new LRUCache(n);
+        int q;
+        cin >> q;
+        for (int i = 0; i<q; i++)
+        {
+            string a;
+            cin >> a;
+            if (a == "SET")
+            {
+                int aa, bb;
+                cin >> aa >> bb;
+                l->set(aa, bb);
+            }
+            else if (a == "GET")
+            {
+                int aa;
+                cin >> aa;
+                cout << l->get(aa) << " ";
+            }
+        }
+        cout << endl;
+    }
+}
+
+
+/*The structure of the class is as follows 
+class LRUCache
+{
+public:
+    LRUCache(int );
+    int get(int );
+    void set(int , int );
+};*/
+
+/*You are required to complete below methods */
+
+namespace {
+    class MyLRUCache {
+    private:
+        struct Node;
+        using Map = unordered_map<int, Node*>;
+
+    public:
+        using Size = Map::size_type;
+
+        explicit MyLRUCache(const Size capacity) : capacity {capacity} { }
+    
+        explicit MyLRUCache(const MyLRUCache&) = delete;
+        explicit MyLRUCache(MyLRUCache&&) = delete;
+    
+        MyLRUCache& operator=(const MyLRUCache&) = delete;
+        MyLRUCache& operator=(MyLRUCache&&) = delete;
+    
+        ~MyLRUCache();
+    
+        void set(int key, int value);
+        int get(int key);
+    
+        static constexpr int element_not_found() { return -1; }
+    
+    private:
+        Map lookup {};
+        Node* head {nullptr}, * tail {nullptr};
+        const Size capacity;
+
+        void move_to_head(Node* node);
+        inline void assign_and_move_to_head(Node* node, int value);
+        inline void assign_and_move_to_head(Node* node, int key, int value);
+
+        bool have_valid_map() const; // FIXME: remove after debugging!
+    };
+
+    struct MyLRUCache::Node {
+        Node* prev, * next;
+        int key, value;
+
+        Node(Node *const prev, Node *const next,
+                const int key, const int value)
+            : prev {prev}, next {next}, key {key}, value {value} { }
+
+        Node(const int key, const int value)
+            : Node{nullptr, nullptr, key, value} { }
+    };
+
+    MyLRUCache::~MyLRUCache()
+    {
+        for (; head != nullptr; head = head->next) delete head->prev;
+        delete tail;
+    }
+
+    void MyLRUCache::set(const int key, const int value)
+    {
+        const auto entp = lookup.find(key);
+    
+        if (entp != lookup.end()) {
+            assign_and_move_to_head(entp->second, value);
+            assert(have_valid_map());
+            return;
+        }
+    
+        if (lookup.empty()) head = tail = new Node(key, value);
+        else if (lookup.size() < capacity) {
+            head->prev = new Node(nullptr, head, key, value);
+            head = head->prev;
+        } else {
+            lookup.erase(tail->key);
+            assign_and_move_to_head(tail, key, value);
+        }
+    
+        lookup.emplace(key, head);
+        assert(have_valid_map());
+    }
+
+    int MyLRUCache::get(int key)
+    {
+        const auto entp = lookup.find(key);
+    
+        if (entp == lookup.end()) return element_not_found();
+    
+        move_to_head(entp->second);
+        assert(have_valid_map());
+        return head->value;
+    }
+
+    void MyLRUCache::move_to_head(Node* const node)
+    {
+        if (node->prev == nullptr) return; // already at head
+    
+        // remove node from its current position in the list
+        node->prev->next = node->next;
+        (node->next == nullptr ? tail : node->next->prev) = node->prev;
+    
+        // re-add node at the head of the list
+        node->prev = nullptr;
+        node->next = head;
+        head->prev = node;
+        head = node;
+    }
+
+    inline void MyLRUCache::assign_and_move_to_head(Node* const node,
+                                                    const int value)
+    {
+        node->value = value;
+        move_to_head(node);
+    }
+
+    inline void MyLRUCache::assign_and_move_to_head(
+            Node* const node, const int key, const int value)
+    {
+        node->key = key;
+        assign_and_move_to_head(node, value);
+    }
+
+    bool MyLRUCache::have_valid_map() const
+    {
+        return all_of(lookup.cbegin(), lookup.cend(),
+                      [](const pair<const int, Node*> kv) {
+            return kv.first == kv.second->key;
+        });
+    }
+    
+    unique_ptr<MyLRUCache> g_cachep;
+}
+
+LRUCache::LRUCache(const int capacity)
+{
+    g_cachep.reset(new MyLRUCache{static_cast<MyLRUCache::Size>(capacity)});
+}
+
+void LRUCache::set(const int key, const int value) 
+{
+    g_cachep->set(key, value);
+}
+
+int LRUCache::get(const int key)
+{
+    return g_cachep->get(key);
+}

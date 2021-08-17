@@ -1,0 +1,48 @@
+function* measureAllRegions(grid, imax, jmax) {
+    function measureRegion(i, j) {
+        if (!grid[i][j]) return 0;
+        
+        grid[i][j] = false;
+        let a = 1;
+        
+        if (i !== 0) { // row above
+            a += measureRegion(i - 1, j);
+            if (j !== 0) a += measureRegion(i - 1, j - 1);
+            if (j !== jmax) a += measureRegion(i - 1, j + 1);
+        }
+        
+        if (i !== imax) { // row below
+            a += measureRegion(i + 1, j);
+            if (j !== 0) a += measureRegion(i + 1, j - 1);
+            if (j !== jmax) a += measureRegion(i + 1, j + 1);
+        }
+        
+        // same row
+        if (j !== 0) a += measureRegion(i, j - 1);
+        if (j !== jmax) a += measureRegion(i, j + 1);
+        
+        return a;
+    }
+    
+    for (let i = 0; i <= imax; ++i) {
+        for (let j = 0; j <= jmax; ++j)
+            if (grid[i][j]) yield measureRegion(i, j);
+    }
+}
+
+function processData(input) {
+    let [n, m, ...lines] = input.split("\n");
+    let grid = lines.map(s => s.trim().split(" ").map(c => c === "1"));
+    console.log(Math.max(...measureAllRegions(grid, n - 1, m - 1)));
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+_input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

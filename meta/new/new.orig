@@ -1,0 +1,13 @@
+#!/bin/sh
+
+die() {
+    status="$?"
+    printf '%s: error: %s\n' "$0" "$1" 2>&1
+    exit "$((status == 0 ? 1 : status))"
+}
+
+[ "$#" -lt 1 ] && die 'too few arguments'
+[ "$#" -gt 1 ] && die 'too many arguments'
+
+[ -e "$1" ] && die 'that file already exists'
+printf '%s\n\n' '#!/usr/bin/env perl' >>"$1" && chmod +x -- "$1" && vim -- "$1"

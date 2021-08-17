@@ -1,0 +1,182 @@
+#include <algorithm>
+#include <cassert>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <set>
+#include <vector>
+
+using namespace std;
+
+namespace {
+    class MedianBag {
+    public:
+        MedianBag() = default;
+        MedianBag(const MedianBag&) = delete;
+        MedianBag(MedianBag&&) = default;
+        MedianBag& operator=(const MedianBag&) = delete;
+        MedianBag& operator=(MedianBag&&) = default;
+        ~MedianBag() = default;
+
+        void insert(int e);
+
+        bool erase(int e) noexcept; // true iff it found and erased an element
+
+        bool empty() const noexcept
+        {
+            return bag_.empty();
+        }
+
+        std::multiset<int>::size_type size() const noexcept
+        {
+            return bag_.size();
+        }
+
+        double median() const noexcept; // undefined behavior if bag is empty
+
+    private:
+        multiset<int> bag_ {};
+        multiset<int>::iterator pos_ {end(bag_)};
+    };
+
+    void MedianBag::insert(const int e)
+    {
+        if (size() % 2 != 0) { // odd number of elements
+            bag_.insert(e);
+            if (e < *pos_) --pos_;
+        }
+        else if (!empty()) { // even number of elements, but more than zero
+            bag_.insert(e);
+            if (e >= *pos_) ++pos_;
+        }
+        else pos_ = bag_.insert(e); // there were no elements before this one
+    }
+
+    bool MedianBag::erase(const int e) noexcept
+    {
+        const auto p = bag_.lower_bound(e);
+        if (p == end(bag_) || *p != e) return false;
+
+        if (size() % 2 == 0) { // even number of elements
+            if (e <= *pos_) ++pos_;
+            bag_.erase(p);
+        }
+        else if (size() != 1) { // odd number of elements, but more than one
+            if (e >= *pos_) --pos_;
+            bag_.erase(p);
+        }
+        else pos_ = bag_.erase(p); // there were no elements except this one
+
+        return true;
+    }
+
+    double MedianBag::median() const noexcept
+    {
+        // With an odd number of elements, the middle element is the median.
+        if (size() % 2 != 0) return *pos_;
+
+        // When an even number of elements, we must average the two middle
+        // elements. Converting them to double before adding instead of after
+        // prevents arithmetic overflow unless their magnitudes are very large.
+        // (If int is 32-bit, this is always sufficient to prevent overflow.)
+        return (static_cast<double>(*pos_)
+                + static_cast<double>(*next(pos_))) / 2.0;
+    }
+}
+
+class Solution {
+public:
+    static vector<double> medianSlidingWindow(const vector<int>& nums, int k);
+};
+
+vector<double> Solution::medianSlidingWindow(const vector<int>& nums,
+                                             const int k)
+{
+    vector<double> ret;
+    if (nums.empty()) return ret;
+
+    assert(0 < k);
+    const auto window_size = static_cast<vector<double>::size_type>(k);
+    assert(window_size <= nums.size());
+
+    // Calling reserve and push_back is cleaner, but most compilers don't
+    // optimize away the capacity check, even in simpler cases than this.
+    // https://lemire.me/blog/2012/06/20/do-not-waste-time-with-stl-vectors/
+    ret.resize(nums.size() - window_size + 1);
+    auto r = begin(ret);
+
+    MedianBag bag;
+
+    auto p = cbegin(nums), q = p + k;
+    for_each(p, q, [&bag](const int e) { bag.insert(e); });
+    *r = bag.median();
+
+    for (const auto qq = cend(nums); q != qq; ++p, ++q) {
+        bag.erase(*p);
+        bag.insert(*q);
+        *++r = bag.median();
+    }
+
+    assert(++r == end(ret));
+    return ret;
+}
+
+namespace {
+    void pretest()
+    {
+        MedianBag bag;
+        
+        bag.insert(10);
+        bag.insert(20);
+
+        cout << bag.median() << ' ';
+        cout << bag.erase(10) << ' ';
+        cout << bag.median() << ' ';
+        cout << bag.erase(19) << ' ';
+        cout << bag.median() << ' ';
+        cout << bag.erase(20) << ' ';
+        cout << bag.empty() << '\n';
+
+        bag.insert(1);
+        cout << bag.erase(1) << '\n';
+
+        bag.insert(1);
+        bag.insert(1);
+        bag.insert(1);
+        bag.insert(1);
+        bag.insert(2);
+        bag.insert(3);
+        cout << bag.empty() << ' ' << bag.median() << '\n';
+
+        for (auto i = 5; i != 0; --i) {
+            cout << bag.erase(1) << ' ';
+            cout << bag.size() << ' ';
+            cout << bag.median() << "; ";
+        }
+
+        cout << '(' << bag.size() << ")\n\n";
+    }
+
+    void test()
+    {
+        const vector<int> nums {1, 3, -1, -3, 5, 3, 6, 7};
+        const auto kmax = static_cast<int>(nums.size());
+
+        for (auto k = 1; k <= kmax; ++k) {
+            cout << "[ ";
+
+            for (const auto median : Solution::medianSlidingWindow(nums, k))
+                cout << median << ' ';
+
+            cout << "]\n";
+        }
+    }
+}
+
+int main()
+{
+    ios_base::sync_with_stdio(false);
+    cout << boolalpha << fixed << setprecision(1);
+    pretest();
+    test();
+}

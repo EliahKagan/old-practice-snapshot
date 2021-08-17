@@ -1,0 +1,12 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+use experimental 'smartmatch';
+
+chomp(@ARGV);
+my $sep = ('-s' ~~ @ARGV || '--spaces' ~~ @ARGV ? ' ' : "\n");
+
+chomp(my @lines = <STDIN>);
+say join($sep, sort @lines);

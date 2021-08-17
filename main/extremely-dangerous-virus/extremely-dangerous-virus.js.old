@@ -1,0 +1,26 @@
+'use strict';
+
+const M = 1000000007;
+
+function pow(n, p) {
+    if (p == 0) return 1;
+    
+    const r = pow(n, Math.floor(p / 2)), s = r * r % M;
+    return p % 2 == 0 ? s : s * n % M;
+}
+
+function processData(input) {
+    const [a, b, t] = input.trim().split(' ').map(Number);
+    console.log(pow((a + b) / 2, t));
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+let _input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

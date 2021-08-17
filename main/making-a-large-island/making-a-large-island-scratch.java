@@ -1,0 +1,154 @@
+import java.util.ArrayList;
+import java.util.List;
+
+class Solution {
+    /** Finds the maximum area of any island that exists or can be formed
+     *  by turning any cell of water into land (adding a "bridge").
+     * @param grid  The terrain, where 0 is water and 1 is land.
+     * @return The maximum area that exists or can be created. */
+    public int largestIsland(final int[][] grid) {
+        final List<Integer> areas = new ArrayList<>();
+        final int maxArea = paintComponentsAndGetAreas(grid, areas);
+        return Math.max(maxArea, findMaxBridgeInducedArea(grid, areas));
+    }
+
+    /** Paint each component a different "color" consisting of indices to an
+     *  areas list, so areas.get(color) will obtain the area of that component.
+     * @param grid   The terrain, where 0 is water and 1 is land.
+     *               1's are replaced by indices to their components' areas.
+     * @param areas  The list that will be filled with two nulls followed by
+     *               the areas of the components marked with each index.
+     * @return The maximum area of any island, or 0 if there was no land. */
+    private static int paintComponentsAndGetAreas(final int[][] grid,
+                                                  final List<Integer> areas) {
+        areas.add(null); // we won't query land area contributions from water
+        areas.add(null); // no "1"s left to query once we paint the islands
+
+        int maxArea = 0;
+
+        for (int i = 0; i != grid.length; ++i) {
+            for (int j = 0; j != grid[i].length; ++j) {
+                if (grid[i][j] != 1) continue; // water, or already painted
+
+                final int area = floodFill(grid, i, j, areas.size());
+                areas.add(area);
+                maxArea = Math.max(maxArea, area);
+            }
+        }
+
+        return maxArea;
+    }
+
+    /** Paints the component containing a specified cell, if it is on the grid
+     *  and currently holds a 1, to be of a specified color.
+     * @param grid     The terrain, which may already be partially painted.
+     * @param i        The 0-based row index of the position to fill from.
+     * @param j        The 0-based column index of the position to fill from.
+     * @param toColor  The color to replace 1 with when painting the island.
+     * @return The area of the component being painted. */
+    private static int floodFill(final int[][] grid,
+                                 final int i, final int j, final int toColor) {
+        final int color = getColor(grid, i, j);
+        if (color == 0 || color == toColor) return 0; // water, or already done
+
+        grid[i][j] = toColor;
+
+        return 1 + floodFill(grid, i, j - 1, toColor)   // west
+                 + floodFill(grid, i, j + 1, toColor)   // east
+                 + floodFill(grid, i - 1, j, toColor)   // north
+                 + floodFill(grid, i + 1, j, toColor);  // south
+    }
+
+    /** Checks component areas adjacent to each water cell, and finds the
+     *  maximum area of any new component that can be produced by adding a,
+     *  bridge, which may connect to zero, one, or multiple islands.
+     * @param grid   The painted terrain, where 0 is water, and each cell of a
+     *               component is colored with a the same value greater than 1.
+     * @param areas  The areas of each painted component, so areas.get(color)
+     *               is the number of cells in the island painted with color.
+     * @return The greatest area of any component that can be formed in this
+     *         way, or 0 if none can (which only happens in a 0-size grid). */
+    private static int findMaxBridgeInducedArea(final int[][] grid,
+                                                final List<Integer> areas) {
+        int maxArea = 0;
+
+        for (int i = 0; i != grid.length; ++i) {
+            for (int j = 0; j != grid[i].length; ++j) {
+                if (grid[i][j] != 0) continue; // bridges on land are pointless
+
+                final int area = computeBridgeInducedAreaAt(grid, areas, i, j);
+                maxArea = Math.max(maxArea, area);
+            }
+        }
+
+        return maxArea;
+    }
+
+    /** Check component areas adjacent to a specific cell, which is assumed to
+     *  be water, and finds the area of that component that would be produced
+     *  by adding a bridge there.
+     * @param grid  The painted terrain (@see findMaxBridgeInducedArea).
+     * @param areas The areas of each painted component, by color.
+     * @param i     The 0-based row index where the bridge would go.
+     * @param j     The 0-based column index where the bridge would go.
+     * @return The area of the component that the bridge would induce. */
+    private static int computeBridgeInducedAreaAt(final int[][] grid,
+                                                  final List<Integer> areas,
+                                                  final int i, final int j) {
+        final int[] adj = getAdjacentColors(grid, i, j);
+        int area = 1;
+
+        for (int h = 0; h != adj.length; ++h) {
+            final int color = adj[h];
+            if (color == 0) continue;
+
+            // ensure we count each color at most once
+            for (int k = h + 1; k != adj.length; ++k)
+                if (adj[k] == color) adj[k] = 0;
+
+            area += areas.get(color);
+        }
+
+        return area;
+    }
+
+    /** Gets the colors adjacent to a specified cell in the grid.
+     * @param grid  The painted terrain, where 0 represents water.
+     * @param i     The 0-based row index of the position to look next to.
+     * @param j     The 0-based column index of the position to look next to.
+     * @return An array of the colors seen west, east, north, and south of
+     *         the current position. Outside the grid, 0 (water) is seen. */
+    private static int[] getAdjacentColors(final int[][] grid,
+                                           final int i, final int j) {
+        return new int[] { getColor(grid, i, j - 1),   // west
+                           getColor(grid, i, j + 1),   // east
+                           getColor(grid, i - 1, j),   // north
+                           getColor(grid, i + 1, j) }; // south
+    }
+
+    /** Retrieves the color of the specified cell, or 0 if it is off the grid.
+     * @param grid  The terrain to be inspected.
+     * @param i     The 0-based row index of the position to examine.
+     * @param j     The 0-based column index of the position to examine.
+     * @return The contents of grid[i][j], or 0 if that position is invalid. */
+    private static int getColor(final int[][] grid, final int i, final int j) {
+        return i < 0 || i >= grid.length || j < 0 || j >= grid[i].length
+                ? 0
+                : grid[i][j];
+    }
+}
+
+final class UnitTest {
+    public static void main(final String[] args) {
+        final int[][] grid = { {0,1,0,0,1,0,1,0},
+                               {1,0,1,1,1,1,0,1},
+                               {0,1,0,1,0,0,0,1},
+                               {1,1,0,0,1,0,0,0},
+                               {1,1,0,0,0,0,0,0},
+                               {0,0,0,0,0,0,0,0},
+                               {0,1,1,1,0,1,1,1},
+                               {1,0,0,1,1,1,0,0} };
+
+        System.out.println(new Solution().largestIsland(grid)); // expect 15
+    }
+}

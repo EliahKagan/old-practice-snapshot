@@ -1,0 +1,109 @@
+#include <cassert>
+#include <cstddef>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <stdexcept>
+#include <unordered_map>
+
+class LFUCache {
+public:
+    explicit LFUCache(int capacity);
+
+    LFUCache(const LFUCache&) = delete;
+    LFUCache(LFUCache&&) = default;
+    LFUCache& operator=(const LFUCache&) = delete;
+    LFUCache& operator=(LFUCache&&) = default;
+    ~LFUCache() = default;
+
+    int get(int key);
+
+    void put(int key, int value);
+
+private:
+    struct Group;
+
+    struct Entry {
+        // Allows Entry objects to be emplaced.
+        Entry(std::list<Group>::iterator group, int key, int value) noexcept;
+
+        std::list<Group>::iterator group;
+        int key, value;
+    };
+
+    struct Group {
+        explicit Group(unsigned frequency) noexcept;
+
+        std::list<Entry> entries;
+        unsigned frequency;
+    };
+
+    static constexpr auto not_found = -1;
+
+    void bump(std::list<Entry>::iterator entry);
+
+    std::unordered_map<int, std::list<Entry>::iterator> map_;
+
+    std::list<Group> groups_;
+
+    int vacancy_;
+};
+
+LFUCache::LFUCache(const int capacity) : vacancy_{capacity}
+{
+    if (capacity < 0) throw std::out_of_range{"negative capacity not allowed"};
+}
+
+int LFUCache::get(const int key)
+{
+    throw std::logic_error{"not yet implemented"}; // FIXME: implement this
+}
+
+void LFUCache::put(const int key, const int value)
+{
+    throw std::logic_error{"not yet implemented"}; // FIXME: implement this
+}
+
+inline LFUCache::Entry::Entry(const std::list<Group>::iterator group,
+                              const int key, const int value) noexcept
+        : group{group}, key{key}, value{value}
+{
+}
+
+inline LFUCache::Group::Group(const unsigned frequency) noexcept
+        : frequency{frequency}
+{
+}
+
+constexpr int LFUCache::not_found;
+
+void LFUCache::bump(const std::list<Entry>::iterator entry)
+{
+    const auto cur = entry->group;
+
+    if (cur != std::begin(groups_)
+                && std::prev(cur)->frequency == cur->frequency + 1u) {
+        // A group exists for the higher frequency, so splice the entry there.
+        const auto prev = std::prev(cur);
+        entry->group = prev;
+        prev->entries.splice(std::begin(prev->entries), cur->entries, entry);
+        if (cur->entries.empty()) groups_.erase(cur);
+    }
+    else if (cur->entries.size() == 1u) {
+        // The current group has only this entry, so promote its frequency.
+        ++cur->frequency;
+        cur->entries.splice(std::begin(cur->entries), cur->entries, entry);
+    } else {
+        // Create a group for the higher frequency, then splice the entry there.
+        const auto prev = groups_.emplace(cur, cur->frequency + 1u);
+        entry->group = prev;
+        prev->entries.splice(std::begin(prev->entries), cur->entries, entry);
+    } // FIXME: extract similar code in 1st and 3rd cases into a helper function
+}
+
+int main()
+{
+    LFUCache cache {10};
+    cache.put(10, 100);
+    std::cout << cache.get(10) << '\n';
+}

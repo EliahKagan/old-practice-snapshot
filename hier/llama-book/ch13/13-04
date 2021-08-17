@@ -1,0 +1,49 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Const::Fast;
+use English qw(-no_match_vars);
+
+const my $SUCCESS => 0;
+const my $FAILURE => 1;
+
+const my $USAGE => <<"EOF";
+Usage: $PROGRAM_NAME FILE...
+
+Deletes files, similar to the default action of rm without any options passed.
+No options are recognized and every argument is interpreted as a pathname.
+This program is insufficiently tested. Use it at your own risk, if you dare.
+EOF
+
+if (!@ARGV) {
+    print {*STDERR} $USAGE;
+    exit $FAILURE;
+}
+
+my $status = $SUCCESS;
+
+for my $path (@ARGV) {
+    lstat $path; # Always check the entry to be removed, never its target.
+
+    if (-d _) {
+        # Handle this explicitly, as the user MAY otherwise be able to unlink
+        # directories, if they are root and they passed -U to the interpreter.
+        print {*STDERR} "$PROGRAM_NAME: '$path' is a directory\n";
+        $status = $FAILURE;
+        next;
+    }
+
+    if (! -w _ && -e _) {
+        # Users are likely to expect even simple rm implementations to ask.
+        print {*STDERR} "$PROGRAM_NAME: remove write-protected '$path'? ";
+        if (not <STDIN> =~ /\A\s*y(?:es)?\s*\z/imsx) { next }
+    }
+
+    if (! unlink $path) {
+        print {*STDERR} "$PROGRAM_NAME: can't remove '$path': $OS_ERROR\n";
+        $status = $FAILURE;
+    }
+}
+
+exit $status;

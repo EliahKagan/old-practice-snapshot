@@ -1,0 +1,14 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my %names = (
+    fred => 'flintstone',
+    barney => 'rubble',
+    wilma => 'flintstone',
+);
+
+print 'Enter given name: ';
+chomp(my $given = <>);
+print "The family name is $names{$given}.\n";

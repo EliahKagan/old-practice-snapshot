@@ -1,0 +1,19 @@
+static int parseMod(const string value, const int mod)
+{
+    int acc = 0, place = 1;
+    
+    for_each(value.crbegin(), value.crend(), [&, mod](const char digit) {
+        constexpr auto base = 10;
+        acc = (acc + (digit - '0') * place) % mod;
+        place = (place * base) % mod;
+    });
+    
+    return acc;
+}
+
+/*You are required to complete this method */
+int remainderWith7(string n)
+{
+    return parseMod(n, 7);
+}
+

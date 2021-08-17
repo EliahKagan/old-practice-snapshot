@@ -1,0 +1,44 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringJoiner;
+
+final class AllSwap {
+  private static void swap(final String[] a, final int i, final int j) {
+    final String tmp = a[i];
+    a[i] = a[j];
+    a[j] = tmp;
+  }
+
+  private static String[] allSwap(final String[] strings) {
+    final Map<Character, Integer> indices = new HashMap<>();
+
+    for (int j = 0; j != strings.length; ++j) {
+      if (!strings[j].isEmpty()) {
+        final Character c = strings[j].charAt(0);
+        final Integer i = indices.get(c);
+
+        if (i == null) indices.put(c, j);
+        else {
+          swap(strings, i, j);
+          indices.remove(c);
+        }
+      }
+    }
+
+    return strings;
+  }
+
+  private static void test(final String... strings) {
+    final StringJoiner sj = new StringJoiner(", ", "[", "]");
+    for (final String s : allSwap(strings)) sj.add(s);
+    System.out.println(sj);
+  }
+
+  public static void main(final String[] args) {
+    test("ab", "ac");
+    test("ax", "bx", "cx", "cy", "by", "ay", "aaa", "azz");
+    test("ax", "bx", "ay", "by", "ai", "aj", "bx", "by");
+  }
+  
+  private AllSwap() { } // the AllSwap class should not be instantiated
+}

@@ -1,0 +1,150 @@
+class Solution {
+public:
+    static vector<vector<string>> findLadders(string beginWord, string endWord,
+                                              vector<string>& wordList);
+};
+
+namespace {
+    constexpr auto not_found = numeric_limits<unsigned>::max();
+
+    unsigned find_target(const vector<string>& words,
+                         const string& target_word)
+    {
+        const auto wl_begin = cbegin(words), wl_end = cend(words);
+        const auto p = find(wl_begin, wl_end, target_word);
+        return p == wl_end ? not_found : static_cast<unsigned>(p - wl_begin);
+    }
+
+    inline bool have_edge(const string& s, const string& t) noexcept
+    {
+        auto diff = false;
+
+        auto q = cbegin(t);
+
+        for (const auto ch : s) {
+            if (ch != *q) {
+                if (diff) return false;
+                diff = true;
+            }
+
+            ++q;
+        }
+
+        return diff;
+    }
+
+    vector<vector<unsigned>> make_graph(const vector<string>& words)
+    {
+        const auto count = words.size(), last = count - 1u;
+        vector<vector<unsigned>> adj (count);
+
+        for (size_t i {0u}; i != last; ++i) {
+            for (auto j = i + 1u; j != count; ++j) {
+                if (have_edge(words[i], words[j])) {
+                    adj[i].push_back(static_cast<unsigned>(j));
+                    adj[j].push_back(static_cast<unsigned>(i));
+                }
+            }
+        }
+
+        return adj;
+    }
+
+    vector<unsigned> mark_depths(const vector<vector<unsigned>>& adj,
+                                 unsigned cur, const unsigned target)
+    {
+        assert(cur != target);
+        vector<unsigned> vis (adj.size());
+        auto depth = vis[cur] = 1u;
+        auto found = false;
+
+        queue<unsigned> q;
+        q.push(cur);
+
+        while (!found && !q.empty()) {
+            ++depth;
+            for (auto breadth = q.size(); breadth != 0u; --breadth) {
+                cur = q.front();
+                q.pop();
+
+                for (const auto next : adj[cur]) {
+                    if (vis[next] != 0u) continue;
+                    vis[next] = depth;
+                    if (next == target) found = true;
+                    q.push(next);
+                }
+            }
+        }
+
+        if (!found) vis.clear();
+        return vis;
+    }
+
+    vector<string> transform_path(const vector<string>& words,
+                                  vector<unsigned>& path)
+    {
+        vector<string> transformed;
+        transformed.reserve(path.size());
+
+        transform(cbegin(path), cend(path), back_inserter(transformed),
+                  [&words](const unsigned i) { return words[i]; });
+
+        return transformed;
+    }
+
+    void find_paths(vector<vector<string>>& paths, const vector<string>& words,
+            vector<unsigned>& path, const vector<vector<unsigned>>& adj,
+            const vector<unsigned>& vis, const unsigned cur)
+    {
+        path.push_back(cur);
+
+        if (path.size() == path.capacity()) {
+            paths.push_back(transform_path(words, path));
+        } else {
+            const auto next_depth = path.size() + 1;
+
+            for (const auto next : adj[cur]) {
+                if (vis[next] == next_depth)
+                    find_paths(paths, words, path, adj, vis, next);
+            }
+        }
+
+        path.pop_back();
+    }
+
+    inline void add_paths(vector<vector<string>>& paths,
+            const vector<string>& words, const vector<vector<unsigned>>& adj,
+            vector<unsigned>& vis, const unsigned target, const unsigned cur)
+    {
+        // unmark non-targets that have the same depth as the target
+        const auto target_depth = vis[target];
+        for (auto& depth : vis)
+            if (depth == target_depth) depth = 0u;
+        vis[target] = target_depth;
+
+        // find paths to the target and append them as vectors of strings
+        vector<unsigned> path;
+        path.reserve(target_depth); // not just an optimization - this is used
+        find_paths(paths, words, path, adj, vis, cur);
+    }
+}
+
+vector<vector<string>> Solution::findLadders(
+        string beginWord, const string endWord, vector<string>& wordList)
+{
+    vector<vector<string>> paths;
+
+    const auto target = find_target(wordList, endWord);
+    if (target == not_found) return paths;
+    const auto cur = static_cast<unsigned>(wordList.size());
+
+    wordList.push_back(move(beginWord));
+
+    const auto adj = make_graph(wordList);
+    auto vis = mark_depths(adj, cur, target);
+    if (!vis.empty()) add_paths(paths, wordList, adj, vis, target, cur);
+
+    wordList.pop_back();
+
+    return paths;
+}

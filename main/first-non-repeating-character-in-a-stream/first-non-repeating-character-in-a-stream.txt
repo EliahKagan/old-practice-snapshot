@@ -1,0 +1,2 @@
+The "fast" version took 1.472 s on geeksforgeeks.org, while the original brute-
+force "slow" version took only 0.889 s!

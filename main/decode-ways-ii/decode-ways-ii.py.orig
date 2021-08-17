@@ -1,0 +1,56 @@
+MOD = 10**9 + 7
+
+class Solution:
+    def numDecodings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        if not s:
+            # Should be 1, but for a related the problem the leetcode.com
+            # online judge wanted 0, so I assume that's preferred here too.
+            return 0
+
+        first = s[-1]
+        far = 1
+        near = self._narrowWays(first)
+
+        for i in range(len(s) - 2, -1, -1):
+            first, second = s[i], first
+            far, near = near, (self._narrowWays(first) * near
+                                + self._wideWays(first, second) * far) % MOD
+
+        return near
+
+    def _narrowWays(self, digit):
+        if digit == '0':
+            return 0
+        elif digit == '*':
+            return 9
+        else:
+            return 1
+
+    def _wideWays(self, first, second):
+        if first == '0':
+            return 0 # this check and return is an optimization (see end)
+        elif first == '*':
+            if second == '*':
+                return 15 # 11..19, 21..26
+            elif '0' <= second <= '6':
+                return 2
+            else:
+                return 1
+        elif first == '1':
+            if second == '*':
+                return 9 # 11..19
+            else:
+                return 1
+        elif first == '2':
+            if second == '*':
+                return 6 # 21..26
+            elif '0' <= second <= '6':
+                return 1
+            else:
+                return 0
+        else:
+            return 0

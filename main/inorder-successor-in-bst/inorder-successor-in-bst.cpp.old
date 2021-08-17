@@ -1,0 +1,33 @@
+/*The structure of Node
+struct Node {
+int data;
+Node * right, * left;
+};*/
+
+namespace {
+    Node * findInOrderSuccessor(Node *root, Node *x)
+    {
+        auto got_x = false;
+        
+        const function<Node * (Node *)> dfs {[&dfs, &got_x, x](Node *p) {
+            if (p == nullptr || got_x) return p;
+            
+            const auto q = dfs(p->left);
+            if (q != nullptr) return q;
+            
+            if (p == x) got_x = true;
+            return dfs(p->right);
+        }};
+        
+        return dfs(root);
+    }
+}
+
+/* The below function should return the node which is 
+inorder successor of given node x. */
+Node * inOrderSuccessor(Node *root, Node *x)
+{
+    if (root == nullptr || x == nullptr) return nullptr;
+    //if (x->right != nullptr) return x->right; // a simple optimization
+    return findInOrderSuccessor(root, x);
+}

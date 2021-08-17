@@ -1,0 +1,72 @@
+<Query Kind="Program" />
+
+internal sealed class SinglyLinkedList<T> : IEnumerable<T> {
+    internal void AddFront(T value)
+    {
+        if (IsEmpty)
+            _first = _last = new Node(value);
+        else
+            _first = new Node(value, _first);
+    }
+    
+    internal void AddBack(T value)
+    {
+        if (IsEmpty) {
+            _first = _last = new Node(value);
+        } else {
+            _last.Next = new Node(value);
+            _last = _last.Next;
+        }
+    }
+    
+    internal void Add(T value) => AddBack(value);
+    
+    internal bool IsEmpty
+    {
+        get {
+            var ret = _first is null;
+            Debug.Assert(ret == _last is null);
+            return ret;
+        }
+    }
+    
+    public IEnumerator<T> GetEnumerator()
+    {
+        for (var pos = _first; !(pos is null); pos = pos.Next)
+            yield return pos.Value;
+    }
+    
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    private sealed class Node {
+        internal Node(T value) : this(value, null) { }
+    
+        internal Node(T value, Node next) => (Value, Next) = (value, next);
+    
+        internal T Value { get; }
+        
+        internal Node Next { get; set; }
+    }
+    
+    private Node _first = null;
+    
+    private Node _last = null;
+}
+
+internal static class UnitTest {
+    private static void Main()
+    {
+        var initiallyEmpty = new SinglyLinkedList<string>();
+        initiallyEmpty.Dump(nameof(initiallyEmpty));
+        
+        initiallyEmpty.AddFront("foo");
+        initiallyEmpty.AddFront("bar");
+        initiallyEmpty.Dump(nameof(initiallyEmpty));
+    
+        var items = new SinglyLinkedList<int> { 10, 20, 30, 40, 50 };
+        items.Dump(nameof(items));
+        
+        foreach (var num in new[] { 3, 2, 1 }) items.AddFront(num);
+        items.Dump(nameof(items));
+    }
+}

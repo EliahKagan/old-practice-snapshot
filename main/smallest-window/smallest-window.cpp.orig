@@ -1,0 +1,90 @@
+// Smallest window in a string containing all the characters of another string
+//
+// This version outputs the widths (rather than the first matching substring)
+// and only requires duplicate characters in the pattern be matched by a single
+// character in the text.
+
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
+namespace {
+    using It = std::string::const_iterator;
+
+    // Returns a character frequency table.
+    inline std::unordered_map<char, int> get_counts(It first, const It& last)
+    {
+        std::unordered_map<char, int> counts;
+        for (; first != last; ++first) ++counts[*first];
+        return counts;
+    }
+
+    // Returns an iterator to the final element in the narrowest subrange
+    // beginning at first (and ending before last) that contains at least one
+    // of each character with a nonzero count in the counts table, or to last,
+    // if there is no such subrange. Updates counts to hold the frequencies of
+    // characters in the subrange that were matched (and nothing else).
+    It find_leading_cover(std::unordered_map<char, int>& counts,
+                          It first, const It& last)
+    {
+        std::unordered_map<char, int> found;
+        auto right = last;
+
+        const auto q = counts.cend();
+        for (auto n = counts.size(); n != 0u && first != last; ++first) {
+            if (counts.find(*first) != q && ++found[*first] == 1) {
+                right = first;
+                --n;
+            }
+        }
+
+        std::swap(counts, found);
+        return right;
+    }
+
+    // Returns the narrowest width of a window within s in which each distinct
+    // character in t appears at least once, or -1 if there is no such window.
+    std::string::difference_type min_cover_size(const std::string& s,
+                                                const std::string& t)
+    {
+        auto counts = get_counts(t.cbegin(), t.cend());
+        const auto stop = s.cend();
+        auto left = s.cbegin(), right = find_leading_cover(counts, left, stop);
+        if (right == stop) return -1;
+
+        const auto debug = [&left, &right]() { // FIXME: remove after debugging
+            std::cerr << "DEBUG: " << std::string{left, std::next(right)} << '\n';
+        };
+        debug();
+        auto width = right - left;
+
+        while (++right != stop) {
+            // The chars in s we care about (i.e., can use) are those in t.
+            if (counts[*right] == 0) continue;
+            ++counts.at(*right);
+
+            // Advance the left edge until we encounter a character we can
+            // use but have just one of (and thus mustn't be removed).
+            while (counts[*left] != 1) {
+                if (counts.at(*left) != 0) --counts.at(*left);
+                ++left;
+            }
+            debug();
+            width = std::min(width, right - left);
+        }
+
+        return width + 1;
+    }
+}
+
+int main()
+{
+    auto tc = 0;
+    for (std::cin >> tc; tc > 0; --tc) {
+        std::string s, t;
+        std::cin >> s >> t;
+        std::cout << min_cover_size(s, t) << '\n';
+    }
+}

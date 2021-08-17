@@ -1,0 +1,37 @@
+'use strict';
+
+function* measureAllRegions(grid, n, m) {
+    function fill(i, j) {
+        if (i === -1 || i === n || j === -1 || j === m || !grid[i][j])
+            return 0;
+        
+        grid[i][j] = false;
+        
+        return 1 + fill(i - 1, j - 1) + fill(i - 1, j) + fill(i - 1, j + 1) +
+                   fill(i,     j - 1)                  + fill(i,     j + 1) +
+                   fill(i + 1, j - 1) + fill(i + 1, j) + fill(i + 1, j + 1);
+    }
+    
+    for (let i = 0; i !== n; ++i) {
+        for (let j = 0; j !== m; ++j)
+            if (grid[i][j]) yield fill(i, j);
+    }
+}
+
+function processData(input) {
+    let [n, m, ...lines] = input.split("\n");
+    let grid = lines.map(s => s.trim().split(" ").map(c => c === "1"));
+    let areas = measureAllRegions(grid, Number(n), Number(m));
+    console.log(Math.max(...areas));
+} 
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+let _input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+   processData(_input);
+});

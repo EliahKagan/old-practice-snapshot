@@ -1,0 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+
+ internal static class Solution {
+    private static void Main()
+    {
+        var low = new SortedDictionary<int, int>();
+        low.First
+    }
+}

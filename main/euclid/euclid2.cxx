@@ -1,0 +1,419 @@
+// euclid2.cxx - sequences as vectors, and Euclidean 3-vector specialization
+//               (written without <valarray>, as an exercise)
+
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <cmath>
+#include <cstddef>
+#include <cstdlib>
+#include <exception>
+#include <functional>
+#include <initializer_list>
+#include <iostream>
+#include <numeric>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+// Seq interface and implementation:
+
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Weffc++"
+#endif
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max>
+class Seq {
+    static_assert(Max - Min >= -1, "A Seq must have at least zero elements.");
+
+public:
+    static constexpr std::size_t N = static_cast<std::size_t>(Max - Min + 1);
+
+    using Array = std::array<T, N>;
+    using iterator = typename Array::iterator;
+    using const_iterator = typename Array::const_iterator;
+    using reverse_iterator = typename Array::reverse_iterator;
+    using const_reverse_iterator = typename Array::const_reverse_iterator;
+
+    static constexpr T scalar0() { return static_cast<T>(0.); }
+    static constexpr T scalar1() { return static_cast<T>(1.); }
+    static constexpr std::ptrdiff_t lbound() { return Min; }
+    static constexpr std::ptrdiff_t ubound() { return Max; }
+
+    static Seq rep(T x);
+    static Seq zero() { return Seq{}; /* could be: return rep(scalar0()); */ }
+    static Seq unit(std::ptrdiff_t i) { return Seq(i); }
+
+    Seq() { fill(scalar0()); }
+    Seq(std::initializer_list<T> init);
+    Seq(const Seq& v) = default;
+    Seq(Seq&& v) = default;
+    Seq(const Seq& v, const std::function<T(T)>& f)
+        { std::transform(v.cbegin(), v.cend(), begin(), f); }
+    Seq(const Seq& u, const Seq& v, const std::function<T(T, T)>& f)
+        { std::transform(u.cbegin(), u.cend(), v.cbegin(), begin(), f); }
+    explicit Seq(std::ptrdiff_t i, T x = scalar1()); // v[j] = x * delta(i, j)
+    ~Seq() = default;
+
+    Seq& operator=(const Seq&) = default;
+    Seq& operator=(Seq&&) = default;
+    inline const T& operator[](std::ptrdiff_t i) const;
+    T& operator[](std::ptrdiff_t i)
+        { return const_cast<T&>(const_cast<const Seq&>(*this)[i]); }
+
+    bool operator==(const Seq& v) const { return m_data == v.m_data; }
+    bool operator!=(const Seq& v) const { return m_data != v.m_data; }
+
+    Seq& operator+=(const Seq& v)
+        { return apply(v, [](T& x, T y) { x += y; }); }
+    Seq& operator-=(const Seq& v)
+        { return apply(v, [](T& x, T y) { x -= y; }); }
+    Seq& operator*=(T a) { return apply([a](T& x) { x *= a; }); }
+    Seq& operator/=(T a) { return apply([a](T& x) { x /= a; }); }
+    inline Seq& operator%=(T a);
+
+    Seq operator+() const { return *this; }
+    Seq operator-() const { return Seq{*this, [](T x) { return -x; }}; }
+    Seq operator+(const Seq& v) const
+        { return Seq{*this, v, [](T x, T y) { return x + y; }}; }
+    Seq operator-(const Seq& v) const
+        { return Seq{*this, v, [](T x, T y) { return x - y; }}; }
+    Seq operator*(T a) const { return Seq{*this, [a](T x) { return x * a; }}; }
+    Seq operator/(T a) const { return Seq{*this, [a](T x) { return x / a; }}; }
+    inline Seq operator%(T a) const;
+
+    const T& front() const { return m_data.front(); }
+    T& front() { return m_data.front(); }
+    const T& back() const { return m_data.back(); }
+    T& back() { return m_data.back(); }
+
+    const_iterator cbegin() const { return m_data.cbegin(); }
+    const_iterator begin() const { return m_data.begin(); }
+    iterator begin() { return m_data.begin(); }
+    const_iterator cend() const { return m_data.cend(); }
+    const_iterator end() const { return m_data.end(); }
+    iterator end() { return m_data.end(); }
+    const_reverse_iterator crbegin() const { return m_data.crbegin(); }
+    const_reverse_iterator rbegin() const { return m_data.rbegin(); }
+    reverse_iterator rbegin() { return m_data.rbegin(); }
+    const_reverse_iterator crend() const { return m_data.crend(); }
+    const_reverse_iterator rend() const { return m_data.rend(); }
+    reverse_iterator rend() { return m_data.rend(); }
+
+    constexpr bool empty() const { return N == 0; }
+    constexpr std::size_t size() const { return N; }
+    constexpr std::size_t Max_size() const { return N; }
+
+    void fill(const T& filler) { m_data.fill(filler); }
+    void swap(Seq& other) { m_data.swap(other.m_data); }
+
+    inline Seq& apply(const std::function<void(T&)>& f);
+    Seq& apply(const Seq& v, const std::function<void(T&, T)>& f);
+
+    T dot(const Seq& v) const
+        { return std::inner_product(cbegin(), cend(), v.cbegin(), scalar0()); }
+    inline T norm() const; // Euclidean norm
+    T angle(const Seq& v) const;
+    Seq unit() const { return *this / norm(); }
+    Seq& normalize() { return *this /= norm(); }
+    T proj(const Seq& u) const; // scalar projection of u onto *this
+    Seq orth(const Seq& u) const; // vector projection of u onto *this
+    Seq rej(const Seq& u) const { return u - orth(u); } // vector rejection
+
+protected:
+    static struct noinit_type { } noinit;
+    explicit Seq(const noinit_type&) { }
+
+private:
+    static inline std::ostringstream whatFunc(const char* func);
+    static std::string indexRangeError(const char* func, std::ptrdiff_t i);
+    static std::string initSizeError(const char* func, std::size_t n);
+
+    Array m_data;
+};
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public static
+Seq<T, Min, Max> Seq<T, Min, Max>::rep(T x)
+{
+    Seq ret {noinit};
+    ret.fill(x);
+    return ret;
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public ctor
+Seq<T, Min, Max>::Seq(std::initializer_list<T> init)
+{
+    if (init.size() != N) // verify initializer list and array are same size
+        throw std::invalid_argument{initSizeError(__func__, init.size())};
+
+    std::copy(init.begin(), init.end(), begin()); // copy init values to array
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public ctor
+Seq<T, Min, Max>::Seq(std::ptrdiff_t i, T x) // explicit, x = scalar1()
+{
+    try {
+        for (std::ptrdiff_t j = Min; j != i; ++j) (*this)[j] = scalar0();
+        (*this)[i] = x;
+    }
+    catch (const std::out_of_range&) {
+        throw std::out_of_range{indexRangeError(__func__, i)};
+    }
+
+    while (++i <= Max) (*this)[i] = scalar0();
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public operator
+inline const T& Seq<T, Min, Max>::operator[](std::ptrdiff_t i) const
+{
+    try { return m_data.at(static_cast<typename Array::size_type>(i - Min)); }
+    catch (const std::out_of_range&) {
+        throw std::out_of_range{indexRangeError(__func__, i)};
+    }
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public operator
+inline Seq<T, Min, Max>& Seq<T, Min, Max>::operator%=(T a)
+{
+    using std::fmod; // now "fmod" will use std::fmod or any non-std overloads
+    return apply([a](T& x) { fmod(x, a); });
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public operator
+inline Seq<T, Min, Max> Seq<T, Min, Max>::operator%(T a) const
+{
+    using std::fmod; // now "fmod" will use std::fmod or any non-std overloads
+    return Seq{*this, [a](T x) { return fmod(x, a); }};
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public method
+inline Seq<T, Min, Max>&
+Seq<T, Min,Max>::apply(const std::function<void(T&)>& f)
+{
+    std::for_each(begin(), end(), f);
+    return *this;
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public method
+Seq<T, Min, Max>& Seq<T, Min, Max>::apply(const Seq<T, Min,Max>& v,
+                                          const std::function<void(T&, T)>& f)
+{
+    auto vit = v.cbegin();
+    for (auto it = begin(); it != end(); ++it, ++vit) f(*it, *vit);
+
+    return *this;
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public method
+inline T Seq<T, Min, Max>::norm() const
+{
+    using std::sqrt; // now "sqrt" will use std:sqrt or any non-std overloads
+    return sqrt(dot(*this));
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public method
+T Seq<T, Min, Max>::angle(const Seq<T, Min, Max>& v) const
+{
+    using std::acos; // now "acos" will use std::acos or any non-std overloads
+    return acos(dot(v) / (norm() * v.norm()));
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public method
+T Seq<T, Min, Max>::proj(const Seq<T, Min, Max>& u) const
+{
+    return dot(u) / norm();
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // public method
+Seq<T, Min, Max> Seq<T, Min, Max>::orth(const Seq<T, Min, Max>& u) const
+{
+    return dot(u) / dot(*this) * *this;
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // protec. static
+typename Seq<T, Min, Max>::noinit_type Seq<T, Min, Max>::noinit = {}; // init.
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max>   // private static
+inline std::ostringstream Seq<T, Min, Max>::whatFunc(const char* func) // method
+{
+    std::ostringstream what;
+    what << func << ": ";
+    return what;
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // private static
+std::string Seq<T, Min, Max>::indexRangeError(               // method
+    const char* func, std::ptrdiff_t i)
+{
+    assert(i < Min || i > Max);
+
+    auto what = whatFunc(func);
+    what << "Index " << i << " out of range " << Min << ".." << Max << '.';
+    return what.str();
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // private static
+std::string Seq<T, Min, Max>::initSizeError(                 // method
+    const char* func, std::size_t n)
+{
+    assert(n != N);
+
+    auto what = whatFunc(func);
+    what << N << "-element initialization list required, " << n << " given.";
+    return what.str();
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // freestanding
+inline T dot(const Seq<T, Min, Max>& u, const Seq<T, Min, Max>& v) // function
+{
+    return u.dot(v);
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // freestanding
+inline Seq<T, Min, Max> operator*(T a, const Seq<T, Min, Max>& v) // operator
+{
+    return v * a;
+}
+
+template<typename T, std::ptrdiff_t Min, std::ptrdiff_t Max> // freestanding
+std::ostream& operator<<(std::ostream& o, const Seq<T, Min, Max>& v) // oper.
+{
+    if (Seq<T, Min, Max>::N == 0) return o << "()";
+
+    // Build string first, to avoid unexpected partial output w/ buffered I/O.
+    std::ostringstream s;
+    auto it = v.cbegin();
+    s << '(' << *it;
+    while (++it != v.cend()) s << ", " << *it;
+    s << ')';
+
+    return o << s.str();
+}
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+// Vec3 interface and implementation:
+
+template<typename T>
+class Vec3 : public Seq<T, 1 , 3> {
+    using Seq<T, 1, 3>::Seq;
+
+public:
+    static Vec3 i() { return Vec3(1); }
+    static Vec3 j() { return Vec3(2); }
+    static Vec3 k() { return Vec3(3); }
+
+    const T& x() const { return (*this)[1]; }
+    T& x() { return const_cast<T&>(const_cast<const Vec3*>(this)->x()); }
+    const T& y() const { return (*this)[2]; }
+    T& y() { return const_cast<T&>(const_cast<const Vec3*>(this)->y()); }
+    const T& z() const { return (*this)[3]; }
+    T& z() { return const_cast<T&>(const_cast<const Vec3*>(this)->z()); }
+
+    Vec3 cross(const Vec3& v) const;
+    T box(const Vec3& v, const Vec3& w) const;
+};
+
+template<typename T> // public method
+Vec3<T> Vec3<T>::cross(const Vec3<T>& v) const
+{
+    return Vec3{y() * v.z() - z() * v.y(),
+                z() * v.x() - x() * v.z(),
+                x() * v.y() - y() * v.x()};
+}
+
+template<typename T> // public method
+T Vec3<T>::box(const Vec3<T>& v, const Vec3<T>& w) const
+{
+    return -z() * v.y() * w.x() + y() * v.z() * w.x() + z() * v.x() * w.y()
+          - x() * v.z() * w.y() - y() * v.x() * w.z() + x() * v.y() * w.z();
+}
+
+template<typename T> // freestanding function
+inline Vec3<T> cross(const Vec3<T>& u, const Vec3<T>& v)
+{
+    return u.cross(v);
+}
+
+template<typename T> // freestanding function
+inline T box(const Vec3<T>& u, const Vec3<T>& v, const Vec3<T>& w)
+{
+    return u.box(v, w);
+}
+
+// Test harness:
+namespace {
+    bool oobtest = false;
+
+    void test_Seq()
+    {
+        std::cout << "Test of Seq<T,Min,Max>:\n\n";
+
+        const Seq<double, 1, 3> u {.1, .2, .3}, v {10., 20., 30.};
+
+        for (auto i = v.lbound(); i <= v.ubound(); ++i) {
+            std::cout << "(u + .5 * +v)[" << i << "] = " << (u + .5 * +v)[i]
+                      << '\n';
+        }
+
+        std::cout << "\n(-v)[2] = " << (-v)[2]
+            << "\t(v % 3.2)[1] = " << (v % 3.2)[1]
+            << "\tzero vector: " << Seq<double, 1, 3>::zero()
+            << "\n0-dimensional zero vector: " << Seq<double, 0, -1>::zero()
+            << "\t1-dimensional zero vector: " << Seq<double, 0, 0>::zero()
+            << "\n\n";
+
+        for (auto x : Seq<double, -2, 2>(-1)) std::cout << ' ' << x;
+        std::cout << "\t\tAll ones, plus all twos, equals "
+            << Seq<double, -3, 3>::rep(1.) + Seq<double, -3, 3>::rep(2.)
+            << ".\n";
+
+        auto w = u;
+        std::cout << "\n(w *= 2) = " << (w *= 2.);
+        std::cout << "\t(w += (1, 1, 1)) = "
+                  << (w += Seq<double, 1, 3>{1., 1., 1.}) << '\n';
+
+        decltype(v) s {0., 1., 1.}, t {1., 1., 0.};
+        std::cout << "\nThe vector projection of " << s << " onto " << t
+            << " is " << t.orth(s) << ".\nThe dot product of " << s
+            << " and " << t << " is " << dot(s, t) << ".\n\n";
+    }
+
+    void test_Vec3()
+    {
+        std::cout << "Test of Vec3:\n\n";
+
+        using V = Vec3<float>;
+
+        std::cout << V::i() << " \u00d7 " << V::j() << " = "
+            << cross(V::i(), V::j()) << '\t' << V::i() << " \u2219 " << V::j()
+            << " = " << dot(V::i(), V::j()) << "\n\n";
+
+        V u {1.1f, 2.2f, 3.3f}, v {std::move(u)};
+        const auto f = [&v]() {
+            std::cout << v.x() << ' ' << v.y() << ' ' << v.z() << "\t\t"; };
+        f(), v.x() = 1.5f, v.y() += .3f, v.z() *= v.x(), f();
+
+        std::cout << box(V::i(), V::j(), V::k()) << '\n';
+
+        if (oobtest) {
+            std::cout << std::endl;
+            std::cout << V::i()[0] << '\n'; // throws exception
+        }
+    }
+}
+
+int main(int, char* argv[])
+{
+    try {
+        test_Seq();
+        test_Vec3();
+    }
+    catch (const std::exception& e) {
+        std::cerr << argv[0] << ": error: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+}

@@ -1,0 +1,150 @@
+<Query Kind="Program" />
+
+internal struct Pair {
+    public readonly int X, Y;
+    
+    public Pair(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
+}
+
+internal struct Cross {
+    public readonly int Row, Col, Branch;
+    
+    public Cross(int row, int col, int branch)
+    {
+        Row = row;
+        Col = col;
+        Branch = branch;
+    }
+}
+
+internal static class CrossEx {
+    private static void GetMinMax(int lhs, int rhs,
+                                  out int min, out int max)
+    {
+        if (lhs < rhs) {
+            min = lhs;
+            max = rhs;
+        } else {
+            min = rhs;
+            max = lhs;
+        }
+    }
+    
+    private static Pair GetBestBranchesFromSum(int bx, int by, int bsum)
+    {
+        if (bx + by <= bsum) return new Pair(bx, by);
+        
+        var bhalf_low = bsum / 2;
+        var bhalf_high = bhalf_low + bsum % 2;
+        
+        int small, big; // OK: in our use case, the order can be switched
+        GetMinMax(bx, by, out small, out big);
+        
+        return small > bhalf_high
+                ? new Pair(bhalf_high, bhalf_low)
+                : new Pair(small, bsum - small); // OK: big > bsum - small
+    }
+    
+    private static Pair GetBestBranchesFromMax(int bx, int by, int bmax)
+        => new Pair(Math.Min(bx, bmax), Math.Min(by, bmax));
+    
+    private static Pair GetBestBranches(Cross x, Cross y)
+    {
+        var di = Math.Abs(x.Row - y.Row);
+        var dj = Math.Abs(x.Col - y.Col);
+        
+        var bx = x.Branch;
+        var by = y.Branch;
+        
+        if (di == 0) return GetBestBranchesFromSum(bx, by, dj - 1);
+        if (dj == 0) return GetBestBranchesFromSum(bx, by, di - 1);
+        
+        return GetBestBranchesFromMax(bx, by, Math.Min(di, dj) - 1);
+    }
+    
+    private static int Area(int branch) => branch * 4 + 1;
+    
+    internal static int MaxDisjointSubcrossAreaProduct(this Cross x, Cross y)
+    {
+        var b = GetBestBranches(x, y);
+        return Area(b.X) * Area(b.Y);
+    }
+}
+
+internal static class Grid {
+    private static void ReadDoublet(out int first, out int second)
+    {
+        var tok = Console.ReadLine().Split();
+        
+        first = int.Parse(tok[0]);
+        second = int.Parse(tok[1]);
+    }
+
+    private static string[] ReadGrid(out int n, out int m)
+    {
+        ReadDoublet(out n, out m); // n rows, m cols
+        
+        return Enumerable.Range(0, n)
+                         .Select(i => Console.ReadLine().Trim())
+                         .ToArray();
+    }
+    
+    private static bool Ok(this string[] grid, int i, int j) 
+        => grid[i][j] == 'G';
+    
+    private static int GetBranch(this string[] grid,
+                                 int n, int m, int i, int j)
+    {
+        var d = Math.Min(Math.Min(i, n - i - 1), Math.Min(j, m - j - 1));
+        var b = 1;
+        
+        while (b <= d && grid.Ok(i + b, j + b) && grid.Ok(i + b, j - b)
+                      && grid.Ok(i - b, j + b) && grid.Ok(i - b, j - b)) ++b;
+        
+        return b - 1;
+    }
+
+    private static IEnumerable<Cross> GetFullCrosses(this string[] grid,
+                                                     int n, int m)
+    {
+        for (var i = 0; i != n; ++i) {
+            for (var j = 0; j != m; ++j) {
+                if (grid.Ok(i, j))
+                    yield return new Cross(i, j, grid.GetBranch(n, m, i, j));
+            }
+        }
+    }
+    
+    internal static IEnumerable<Cross> ReadFullCrosses()
+    {
+        int n, m;
+        return ReadGrid(out n, out m).GetFullCrosses(n, m);
+    }
+}
+
+internal static class Solution {
+    private static int
+    MaxDisjointCrossAreaProduct(this IEnumerable<Cross> fullCrosses)
+    {
+        var c = fullCrosses.Dump().ToArray();
+        var p = 0;
+        
+        var istop = c.Length - 1;
+        for (var i = 0; i < istop; ++i) {
+            for (var j = i + 1; j != c.Length; ++j) {
+                //new { ci = c[i], cj = c[j] }.Dump();
+                p = Math.Max(p, c[i].MaxDisjointSubcrossAreaProduct(c[j]));
+            }
+        }
+        
+        return p;
+    }
+
+    private static void Main()
+        => Console.WriteLine(Grid.ReadFullCrosses()
+                                 .MaxDisjointCrossAreaProduct());
+}

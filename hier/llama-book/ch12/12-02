@@ -1,0 +1,67 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use English qw(-no_match_vars);
+use Readonly;
+
+Readonly my $EXIT_STATUS_TOTAL_SUCCESS => 0;
+Readonly my $EXIT_STATUS_PARTIAL_SUCCESS => 1;
+Readonly my $EXIT_STATUS_FAILURE => 2;
+
+sub balk {
+    my ($kind, $fmt, @args) = @_;
+    return printf {*STDERR} "%s: %s: $fmt\n", $PROGRAM_NAME, $kind, @args;
+}
+
+sub bail {
+    my ($fmt, @args) = @_;
+    balk 'error', $fmt, @args;
+    exit $EXIT_STATUS_FAILURE;
+}
+
+my $exit_status = $EXIT_STATUS_TOTAL_SUCCESS;
+
+sub kvetch {
+    my ($fmt, @args) = @_;
+    balk 'warning', $fmt, @args;
+    $exit_status = $EXIT_STATUS_PARTIAL_SUCCESS;
+    return;
+}
+
+my $name_count = scalar @ARGV;
+
+if ($name_count == 0) { bail 'no files specified' }
+
+my $oldest_name;
+my $oldest_age;
+
+for my $name (@ARGV) {
+    my $age = -M $name;
+
+    if (defined $age) {
+        if (!defined $oldest_age || $oldest_age < $age) {
+            $oldest_age = $age;
+            $oldest_name = $name;
+        }
+    } elsif (-e _) {
+        kvetch '"%s" exists but cannot be checked', $name;
+    } else {
+        kvetch '"%s" does not appear to exist', $name;
+    }
+}
+
+if (!defined $oldest_age) {
+    if ($name_count == 1) {
+        bail 'the file could not be checked';
+    } else {
+        bail 'none of those %d files could not be checked', $name_count;
+    }
+}
+
+my $quantity = sprintf '%.1f', $oldest_age;
+my $unit = ($quantity eq '1.0' ? 'day' : 'days');
+print "\"$oldest_name\" was last modified about $quantity $unit ago.\n";
+
+exit $exit_status;

@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+$VERBOSE = true
+
+# A simple wrapper for a value, able to clone the value to other such warppers.
+class Foo
+  def initialize(start_value)
+    @value = start_value
+  end
+
+  def to_s
+    "Foo(#{@value})"
+  end
+
+  def value
+    @value
+  end
+
+  protected def value=(new_value)
+    @value = new_value
+  end
+
+  def clone_to(other)
+    other.value = @value
+  end
+end
+
+x = Foo.new(10)
+y = Foo.new(20)
+puts "#{x}, #{y}"
+
+x.clone_to(y)
+puts "#{x}, #{y}"
+
+puts y.value
+y.value = 30 # should fail

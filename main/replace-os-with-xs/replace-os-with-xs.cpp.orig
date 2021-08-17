@@ -1,0 +1,59 @@
+#include <iostream>
+#include <vector>
+
+namespace {
+    using Row = std::vector<char>;
+    using Grid = std::vector<Row>;
+    
+    Grid read_grid(const Grid::size_type n, const Row::size_type m)
+    {
+        Grid a (n);
+        for (auto& row : a) {
+            row.resize(m);
+            for (auto& c : row) std::cin >> c;
+        }
+        
+        return a;
+    }
+    
+    void print_grid(const Grid& a)
+    {
+        auto sep = "";
+        
+        for (const auto& row : a) {
+            for (const auto& c : row) {
+                std::cout << sep << c;
+                sep = " ";
+            }
+        }
+        
+        std::cout << '\n';
+    }
+    
+    void flip_surrounded_os(Grid& a, const Grid::size_type n,
+                                     const Row::size_type m)
+    {
+        for (Grid::size_type i {1u}; i + 1u < n; ++i) {
+            for (Row::size_type j {1u}; j + 1u < m; ++j) {
+                if (a[i][j] == 'O'
+                        && a[i - 1u][j] == 'X' && a[i + 1u][j] == 'X'
+                        && a[i][j - 1u] == 'X' && a[i][j + 1u] == 'X')
+                    a[i][j] = 'X';
+            }
+        }
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        Grid::size_type n {};
+        Row::size_type m {};
+        std::cin >> n >> m;
+        
+        auto a = read_grid(n, m);
+        flip_surrounded_os(a, n, m);
+        print_grid(a);
+    }
+}

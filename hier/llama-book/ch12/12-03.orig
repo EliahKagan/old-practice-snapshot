@@ -1,0 +1,8 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+for my $path (@ARGV) {
+    if (-r -w -o $path) { print "$path\n" }
+}

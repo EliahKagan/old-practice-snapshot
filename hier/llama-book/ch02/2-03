@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use Math::Trig;
+
+print 'Enter a radius: ';
+my $r = <>;
+say 'The circumference is ', ($r > 0 ? 2 * pi * $r : 0), '.';

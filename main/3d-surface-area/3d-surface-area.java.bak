@@ -1,0 +1,40 @@
+import java.util.Scanner;
+
+final class Solution {
+    private static int[][]
+    readPaddedMatrix(final Scanner sc, final int height, final int width) {
+        final int[][] grid = new int[][height + 2];
+
+        // the top/bottom margins won't be changed; they can be the same array
+        grid[0] = grid[grid.length - 1] = new int[width + 2];
+
+        // read the rest of the values into the grid
+        for (int i = 1; i <= height; ++i) {
+            final int[] row = new int[width + 2];
+            for (int j = 1; j <= width; ++j) row[j] = sc.nextInt();
+            grid[i] = row;
+        }
+
+        return grid;
+    }
+
+    public static void main(final String[] args) {
+        try (final Scanner sc = new Scanner(System.in)) {
+            final int height = sc.nextInt(), width = sc.nextInt();
+            final int[][] grid = readPaddedMatrix(sc, height, width);
+
+            int area = height * width * 2; // top and bottom faces
+
+            for (int i = 1; i != grid.length; ++i) {
+                for (int j = 1; j != grid[i].length; ++j) {
+                    area += Math.abs(grid[i][j - 1] - grid[i][j])
+                          + Math.abs(grid[i - 1][j] - grid[i][j]);
+                }
+            }
+
+            return area;
+        }
+    }
+
+    private Solution() { throw new AssertionError(); }
+}

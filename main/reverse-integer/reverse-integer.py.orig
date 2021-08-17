@@ -1,0 +1,11 @@
+class Solution:
+    def __init__(self):
+        self._INT_MAX = 2**31 - 1
+
+    def reverse(self, x):
+        """
+        :type x: int
+        :rtype: int
+        """
+        result = int(''.join(reversed(str(x))))
+        return 0 if result > self._INT_MAX else result

@@ -1,0 +1,26 @@
+using System;
+
+internal static class Solution {
+    private static int GreatestCommonDivisor(int m, int n)
+    {
+        return n == 0 ? m : GreatestCommonDivisor(n, m % n);
+    }
+
+    private static void Main()
+    {
+        for (var t = int.Parse(Console.ReadLine()); t > 0; --t) {
+            var a = Array.ConvertAll(Console.ReadLine().Split(' '), int.Parse);
+
+            var x1 = a[0];
+            var y1 = a[1];
+            var x2 = a[2];
+            var y2 = a[3];
+
+            var dx = Math.Abs(x1 - x2);
+            var dy = Math.Abs(y1 - y2);
+
+            var gcd = GreatestCommonDivisor(dx, dy);
+            Console.WriteLine(gcd == 0 ? 0 : gcd - 1);
+        }
+    }
+}

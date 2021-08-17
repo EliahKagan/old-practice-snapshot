@@ -1,0 +1,28 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use DateTime;
+use English qw(-no_match_vars);
+
+sub pluralize {
+    my ($number, $word) = @_;
+    return sprintf '%d %s%s', $number, $word, ($number == 1 ? q{} : q{s});
+}
+
+sub get_then {
+    my ($year, $month, $day, $excess) = @_;
+
+    (defined $year && defined $month && defined $day && !defined $excess)
+        or die "Usage: $PROGRAM_NAME [year] [month] [day]\n";
+
+    return DateTime->new(year => $year, month => $month, day => $day);
+}
+
+my $lapse = DateTime->now - get_then(@ARGV);
+my ($years, $months, $days) = $lapse->in_units(qw(years months days));
+
+printf "%s, %s, %s\n", pluralize($years, 'year'),
+                       pluralize($months, 'month'),
+                       pluralize($days, 'day');

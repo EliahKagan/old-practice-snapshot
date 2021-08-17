@@ -1,0 +1,6 @@
+n = gets.to_i
+fn = gets.split.map(&:to_i).unshift(nil)
+inv = Array.new(n + 1)
+1.upto(n) { |i| inv[fn[i]] = i }
+inv.shift
+puts inv.join(' ')

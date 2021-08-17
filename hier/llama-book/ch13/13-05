@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Const::Fast;
+use English qw(-no_match_vars);
+use File::Basename;
+
+const my $SUCCESS => 0;
+const my $FAILURE => 1;
+
+const my $USAGE => <<"EOF";
+Usage: $PROGRAM_NAME SOURCE DESTINATION
+
+Moves files, similar to the default action of mv without any options passed,
+except that this program may only be invoked with exactly two arguments. As
+with rm, the destination is written or overwritten if it is a file or does not
+exist; otherwise, the destination is an existing directory, and is moved into.
+No options are recognized and both arguments are interpreted as pathnames. More
+or fewer arguments are considered an error, causing this usage message to be
+printed. THIS PROGRAM IS INSUFFICENTLY TESTED. Use it at your own risk.
+EOF
+
+if (@ARGV != 2) {
+    print {*STDERR} $USAGE;
+    exit $FAILURE;
+}
+
+

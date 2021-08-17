@@ -1,0 +1,10 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use List::Util qw(sum);
+
+my @a = sort(split ' ', <>);
+my $s = sum @a;
+printf "%d %d\n", $s - $a[-1], $s - $a[0];

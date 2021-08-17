@@ -1,0 +1,19 @@
+final class Solution {
+    private static double hypotenuseOfMaxAreaTriangle(final double area)
+    {
+        return Math.sqrt(area * 4.0);
+    }
+    
+    public static void main(final String[] args)
+    {
+        try (final java.util.Scanner sc = new java.util.Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t) {
+                final double area = sc.nextDouble();
+                final double hyp = hypotenuseOfMaxAreaTriangle(area);
+                System.out.format("%.0f%n", hyp);
+            }
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

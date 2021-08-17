@@ -1,0 +1,36 @@
+using System;
+
+internal static class Solution {
+    private static int CountEvenFactors(int n)
+    {
+        if (n % 2 != 0) return 0;
+        n /= 2;
+
+        var count = 2; // 1, n
+        var stop = n;
+
+        var i = 2;
+
+        for (; i < stop; ++i) {
+            Console.WriteLine("i = {0}", i);
+
+            if (n % i == 0) {
+                count += 2;
+                Console.WriteLine("Count is now {0}.", count);
+
+                stop = n / i;
+                Console.WriteLine("Stop is now {0}.", stop);
+            }
+        }
+        
+        if (i % stop == stop) --count;
+
+        return count;
+    }
+
+    private static void Main()
+    {
+        for (var t = int.Parse(Console.ReadLine()); t > 0; --t)
+            Console.WriteLine(CountEvenFactors(int.Parse(Console.ReadLine())));
+    }
+}

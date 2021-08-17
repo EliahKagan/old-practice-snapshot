@@ -1,0 +1,91 @@
+import java.util.stream.IntStream;
+
+final class Algo {
+    private static int debug_dump(final int key, final int i)
+    {
+        System.err.format("DEBUG: \tkey=%d \tindex=%d%n", key, i);
+        return i;
+    }
+    
+    static int minGreaterOrEqual(final int[] a, final int key) // returns index
+    {
+        final int i = java.util.Arrays.binarySearch(a, key);
+        return debug_dump(key, i < 0 ? ~i : i);
+    }
+    
+    private Algo() { } // the Algo class should not be instantiated
+}
+
+final class Arith {
+    static int sqrt32(final int n)
+    {
+        return (int)Math.round(Math.floor(Math.sqrt(n)));
+    }
+    
+    private static IntStream rangeClosed(
+            final int startInclusive, final int endInclusive, final int step)
+    {
+        return IntStream.rangeClosed(0, (endInclusive - startInclusive) / step)
+                        .map(k -> startInclusive + k * step);
+    }
+    
+    static IntStream sieve(final int n) // streams primes up to n
+    {
+        final boolean[] a = new boolean[n + 1];
+        
+        final int imax = sqrt32(n);
+        for (int i = 3; i <= imax; i += 2) {
+            if (!a[i]) {
+                final int jstep = i * 2;
+                for (int j = i * i; j <= n; j += jstep) a[j] = true;
+            }
+        }
+        
+        return IntStream.concat(IntStream.of(2),
+                                rangeClosed(3, n, 2).filter(k -> !a[k]));
+    }
+    
+    private Arith() { } // the Arith class should not be instantiated
+}
+
+final class Palindromes {
+    static final int MAX_DIGITS = 8;
+    
+    private static final int TEN = 10;
+    
+    static boolean isPalindrome(int n)
+    {
+        final int[] d = new int[MAX_DIGITS]; // little-endian (1s place first)
+        
+        int i = 0;
+        for (; n != 0; n /= TEN) d[i++] = n % TEN;
+        
+        for (int j = 0; j < --i; ++j)
+            if (d[j] != d[i]) return false;
+        
+        return true;
+    }
+    
+    // the palindromes calass should not be instantiated
+    private Palindromes() { }
+}
+
+final class Solution {
+    public static void main(final String[] args)
+    {
+        final int max = 100_030_001; // first prime palindrome >= 10**7
+        
+        final int[] values = Arith.sieve(max)
+                                  .filter(n -> Palindromes.isPalindrome(n))
+                                  .toArray();
+        
+        try (final java.util.Scanner sc = new java.util.Scanner(System.in)) {
+            IntStream.range(0, sc.nextInt())
+                     .map(i -> sc.nextInt())
+                     .map(k -> values[Algo.minGreaterOrEqual(values, k)])
+                     .forEachOrdered(n -> System.out.println(n));
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

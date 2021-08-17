@@ -1,0 +1,55 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my ($n, $m) = split q{ }, <>;
+
+my @vertices = (-1) x ($n + 1); # add 1 since we're not using $vertices[0]
+
+sub find_set {
+    my ($i) = @_;
+
+    # find the ancestor
+    my $j = $i;
+    while ($vertices[$j] >= 0) { $j = $vertices[$j] }
+
+    # compress the path
+    while ($i != $j) { ($vertices[$i], $i) = ($j, $vertices[$i]) }
+
+    return $j;
+}
+
+sub union {
+    my ($i, $j) = @_;
+
+    # find the roots and check if $i and $j are actually in separate sets
+    $i = find_set($i);
+    $j = find_set($j);
+    return 0 if ($i == $j);
+
+    # union by rank
+    if ($vertices[$i] > $vertices[$j]) {
+        $vertices[$i] = $j; # $j has superior (more negative) rank
+    } else {
+        # if $i and $j have the same rank, promote $i
+        if ($vertices[$i] == $vertices[$j]) { --$vertices[$i] }
+
+        $vertices[$j] = $i; # $i has superior (more negative) rank
+    }
+
+    return 1;
+}
+
+
+# Read all $m edges and sort them nondecreasingly by weight. There is no need
+# to break ties, since we just need the total weight of the "Really Special
+# Subtree," and all a graph's MSTs have the same total weight as one another.
+my @edges = sort { $a->[2] <=> $b->[2] } map { [split q{ }, <>] } (1..$m);
+
+my $acc = 0;
+for my $edge (@edges) {
+    if (union($edge->[0], $edge->[1])) { $acc += $edge->[2] }
+}
+
+print "$acc\n";

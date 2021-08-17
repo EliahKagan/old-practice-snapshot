@@ -1,0 +1,55 @@
+#define DEBUG
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Text;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.1.0")]
+
+internal static class Solution {
+    private const int Limit = 6000000;
+    private static StringBuilder Buffer = new StringBuilder(Limit, Limit);
+    private static Stack<Action> Undos = new Stack<Action>();
+
+    private static int FromEnd(int k) => Buffer.Length - k;
+
+    private static Action Appender(string w) => () => Buffer.Append(w);
+    private static Action Eraser(int k) => () => Buffer.Length -= k;
+
+    private static void Main()
+    {
+        Console.ReadLine(); // ignore Q value; apparently it is unreliable
+
+        for (string s; (s = Console.ReadLine()) != null;) {
+            var a = s.Split(' ');
+
+            switch (int.Parse(a[0])) {
+            case 1: // append
+                var w = a[1];
+                Appender(w)();
+                Undos.Push(Eraser(w.Length));
+                continue;
+
+            case 2: // erase
+                var i = int.Parse(a[1]);
+                Undos.Push(Appender(Buffer.ToString(FromEnd(i), i)));
+                Eraser(i)();
+                continue;
+
+            case 3: // get
+                var j = int.Parse(a[1]) - 1;
+                Console.WriteLine(Buffer[j]);
+                continue;
+
+            case 4: // undo
+                Undos.Pop()();
+                continue;
+
+            default:
+                Contract.Assert(false, "invalid query type");
+                continue; // not reached
+            }
+        }
+    }
+}

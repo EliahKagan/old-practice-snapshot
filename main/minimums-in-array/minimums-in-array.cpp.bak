@@ -1,0 +1,60 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <cassert>
+#include <cstdio>
+#include <limits>
+#include <tuple>
+#include <vector>
+
+namespace {
+    using Index = std::vector<int>::size_type;
+
+    constexpr auto multiple_indices = std::numeric_limits<Index>::max();
+    constexpr auto no_other_value = std::numeric_limits<int>::max();
+    
+    // Returns the minimum value and its index, if that value is unique.
+    // Otherwise, returns the minimum value and multiple_indices as the index.
+    std::tuple<int, Index> get_minval_and_index(const std::vector<int>& a)
+    {
+        const auto n = a.size();
+        assert(0 < n && n < multiple_indices);
+
+        auto val = a.front();
+        Index idx {0u};
+
+        for (Index j {1u}; j != n; ++j) {
+            if (a[j] > val) continue;
+
+            if (a[j] == val) idx = multiple_indices;
+            else {
+                val = a[j];
+                idx = j;
+            }
+        }
+
+        return std::make_tuple(val, idx);
+    }
+
+    // Returns the minimum of all values in a other than skipval. (That is,
+    // traverses the vector, skipping skipval and returning the minimum of all
+    // values not skipped.) Returns no_other_value if only skipval is present.
+    int get_minval_but_skip(const std::vector<int>& a, const int skipval)
+    {
+        auto val = std::numeric_limits<int>::max();
+
+        for (const auto x : a)
+            if (x < val && x != skipval) val = x;
+
+        return val;
+    }
+
+    int get_min_sum_from_different_indices(const std::vector<int>& a,
+                                           const std::vector<int>& b)
+    {
+        assert(!a.empty() && a.size() == b.size());
+
+
+    }
+}

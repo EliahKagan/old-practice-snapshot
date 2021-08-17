@@ -1,0 +1,64 @@
+#include <iostream>
+#include <iterator>
+#include <sstream>
+#include <string>
+
+#define VOWELS case 'a': case 'e': case 'i': case 'o': case 'u'
+
+namespace {
+    int read_value()
+    {
+        std::string s;
+        std::getline(std::cin, s);
+        
+        std::istringstream in {s};
+        auto x = 0;
+        in >> x;
+        
+        return x;
+    }
+    
+    using It = std::string::iterator;
+    
+    bool advance_left(It& left, const It right)
+    {
+        for (; left != right; ++left) {
+            switch (*left) {
+                VOWELS:     return true;
+                default:    continue; // skip over consonants
+            }
+        }
+        
+        return false;
+    }
+    
+    bool advance_right(const It left, It& right)
+    {
+        for (; left != right; --right) {
+            switch (*right) {
+                VOWELS:     return true;
+                default:    continue; // skip over consonants
+            }
+        }
+        
+        return false;
+    }
+    
+    void reverse_vowels(std::string& s)
+    {
+        if (s.empty()) return;
+        
+        auto left = std::begin(a), right = std::prev(std::end(a));
+        
+        while (advance_left(left, right) && advance_right(left, right))
+            std::swap(*left, *right);
+        
+        for (auto left = std::begin(a), right = std::prev(std::end(a));
+                advance_left(left, right)
+    }
+}
+
+int main()
+{
+    
+}

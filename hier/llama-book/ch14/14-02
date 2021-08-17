@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use feature qw(fc);
+
+my %last_name = qw(
+        fred flintsone
+        Wilma Flintstone
+        Barney Rubble
+        betty rubble
+        Bamm-Bamm Rubble
+        PEBBLES FLINTSTONE
+);
+
+my @keys = sort { fc $last_name{$a} cmp fc $last_name{$b} or fc $a cmp fc $b }
+                keys %last_name;
+
+for my $first_name (@keys) { print "$first_name $last_name{$first_name}\n" }

@@ -1,0 +1,180 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+static void *xmalloc(const size_t len)
+{
+    void *const p = malloc(len);
+    if (p == NULL) abort();
+    return p;
+}
+
+static void *xrealloc(void *const p, const size_t len)
+{
+    void *const q = realloc(p, len);
+    if (q == NULL) abort();
+    return q;
+}
+
+struct quad {
+    int w, x, y, z;
+};
+
+struct quad_vec {
+    size_t capacity, length;
+    struct quad elems[];
+};
+
+static inline size_t quad_vec_detail_capacity(const struct quad_vec *const qv)
+{
+    return qv == NULL ? 0u : qv->capacity;
+}
+
+static void quad_vec_detail_grow(struct quad_vec **const qvp)
+{
+    if (*qvp == NULL) {
+        enum { initial_capacity = 1 };
+
+        *qvp = xmalloc(sizeof(struct quad_vec)
+                        + sizeof(struct quad) * initial_capacity);
+
+        (*qvp)->capacity = initial_capacity;
+        (*qvp)->length = 0u;
+    } else {
+        (*qvp)->capacity *= 2u;
+
+        *qvp = xrealloc(*qvp, sizeof(struct quad_vec)
+                                + sizeof(struct quad) * (*qvp)->capacity);
+    }
+}
+
+static inline struct quad_vec *quad_vec_create()
+{
+    return NULL;
+}
+
+static void quad_vec_destroy(struct quad_vec **const qvp)
+{
+    free(*qvp);
+    *qvp = NULL;
+}
+
+static inline void quad_vec_clear(struct quad_vec **const qvp)
+{
+    if (*qvp != NULL) (*qvp)->length = 0;
+}
+
+static inline size_t quad_vec_length(const struct quad_vec *const qv)
+{
+    return qv == NULL ? 0u : qv->length;
+}
+
+static inline bool quad_vec_empty(const struct quad_vec *const qv)
+{
+    return quad_vec_length(qv) == 0u;
+}
+
+static inline const struct quad
+*quad_vec_cbegin(const struct quad_vec *const qv)
+{
+    return qv == NULL ? NULL : qv->elems;
+}
+
+static inline const struct quad *quad_vec_cend(const struct quad_vec *const qv)
+{
+    return qv == NULL ? NULL : qv->elems + qv->length;
+}
+
+static inline void quad_vec_push_back(struct quad_vec **const qvp,
+                                      const struct quad item)
+{
+    if (quad_vec_length(*qvp) == quad_vec_detail_capacity(*qvp))
+        quad_vec_detail_grow(qvp);
+
+    *((*qvp)->elems + (*qvp)->length++) = item;
+}
+
+static int cmp(const void *const lhsp, const void *const rhsp)
+{
+    // Quickly compares ints of small magnitude.
+    // DO NOT use to compare ints whose difference might exceed INT_MAX!
+    return *(const int *)lhsp - *(const int *)rhsp;
+}
+
+static void get_quads_with_sum(struct quad_vec **restrict const qvp,
+        const size_t len, const int *restrict const nums, const int target)
+{
+    if (len < 4u) return;
+    const int *const wq = nums + (len - 3u), *const xq = nums + (len - 2u);
+
+    for (const int *wp = nums; wp != wq; ) {
+        const int w = *wp, xyz_target = target - w;
+
+        for (const int *xp = wp + 1; xp != xq; ) {
+            const int x = *xp, yz_target = xyz_target - x;
+
+            for (const int *yp = xp + 1, *zp = nums + (len - 1u); yp < zp; ) {
+                const int y = *yp, z = *zp, yz_sum = y + z;
+
+                if (yz_sum == yz_target)
+                    quad_vec_push_back(qvp, (struct quad){w, x, y, z});
+
+                if (yz_sum <= yz_target)
+                    while (*yp == y && yp < zp) ++yp;
+
+                if (yz_sum >= yz_target)
+                    while (*zp == z && yp < zp) --zp;
+            }
+
+            while (*xp == x && xp != xq) ++xp;
+        }
+
+        while (*wp == w && wp != wq) ++wp;
+    }
+}
+
+static void read_nums_sorted(int **const numsp, const size_t len)
+{
+    *numsp = xrealloc(*numsp, sizeof **numsp * len);
+    for (size_t i = 0u; i != len; ++i) (void)scanf(" %d", &(*numsp)[i]);
+    qsort(*numsp, len, sizeof **numsp, cmp);
+}
+
+static void print_results_or(const struct quad_vec *restrict const qv,
+                             const char *restrict const fallback)
+{
+    if (quad_vec_empty(qv)) {
+        puts(fallback);
+    } else {
+        const struct quad *const q = quad_vec_cend(qv);
+        for (const struct quad *p = quad_vec_cbegin(qv); p != q; ++p)
+            printf("%d %d %d %d $", p->w, p->x, p->y, p->z);
+
+        putchar('\n');
+    }
+}
+
+int main(void)
+{
+    int *nums = NULL;
+    struct quad_vec *qv = quad_vec_create();
+
+    int t = 0;
+    for ((void)scanf("%d", &t); t > 0; --t) {
+        size_t len = 0u;
+        int target = 0;
+        (void)scanf(" %zu %d", &len, &target);
+
+        read_nums_sorted(&nums, len);
+        quad_vec_clear(&qv);
+        get_quads_with_sum(&qv, len, nums, target);
+        print_results_or(qv, "-1");
+    }
+
+    quad_vec_destroy(&qv);
+    free(nums);
+}

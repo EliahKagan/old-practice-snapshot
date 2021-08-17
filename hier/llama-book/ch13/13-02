@@ -1,0 +1,10 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+use IO::Prompt::Tiny qw(prompt);
+
+my $dir = prompt 'Where do you want to go?';
+if ($dir =~ /\A\s*\z/msx) { chdir } else { chdir $dir }
+for my $name (glob q{.* *}) { print "$name\n" }

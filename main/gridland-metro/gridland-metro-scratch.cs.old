@@ -1,0 +1,39 @@
+using System;
+using System.Linq;
+
+internal struct Interval {
+    public long Left, Right;
+    
+    public Interval(long left, long right)
+    {
+        Left = left;
+        Right = right;
+    }
+}
+
+internal struct RowInterval {
+    public int Down;
+    
+    public Interval LeftRight;
+    
+    public RowInterval(int down, long left, long right)
+    {
+        Down = down;
+        LeftRight = new Interval(left, right);
+    }
+    
+    public RowInterval(string[] values) : this()
+    
+    public RowInterval(string line) : this()
+}
+
+internal static class Solution {
+    private static void Main()
+    {
+        var nmk = Console.ReadLine().Split();
+        var k = int.Parse(nmk[2]);
+        var size = long.Parse(nmk[0]) * long.Parse(nmk[1]);
+        
+        
+    }
+}

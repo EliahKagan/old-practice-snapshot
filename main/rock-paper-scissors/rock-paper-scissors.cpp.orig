@@ -1,0 +1,62 @@
+#ifdef NDEBUG
+#error Runtime assertions are unexpectedly disabled for this build.
+#endif
+
+#include <cassert>
+#include <iostream>
+
+namespace {
+    const char* outcome(const char a, const char b)
+    {
+        switch (a) {
+        case 'P':
+            switch (b) {
+            case 'P':
+                return "DRAW";
+            case 'R':
+                return "A";
+            case 'S':
+                return "B";
+            default:
+                assert(false);
+            }
+
+        case 'R':
+            switch (b) {
+            case 'P':
+                return "B";
+            case 'R':
+                return "DRAW";
+            case 'S':
+                return "A";
+            default:
+                assert(false);
+            }
+
+        case 'S':
+            switch (b) {
+            case 'P':
+                return "A";
+            case 'R':
+                return "B";
+            case 'S':
+                return "DRAW";
+            default:
+                assert(false);
+            }
+
+        default:
+            assert(false);
+        }
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        auto a = '\0', b = '\0';
+        std::cin >> a >> b;
+        std::cout << outcome(a, b) << '\n';
+    }
+}

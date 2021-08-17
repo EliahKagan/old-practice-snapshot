@@ -1,0 +1,29 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Readonly;
+use IO::Prompt::Tiny qw(prompt);
+
+Readonly my $LOWER_BOUND => 1;
+Readonly my $UPPER_BOUND => 100;
+Readonly my $EXIT_STATUS_WIN => 0;
+Readonly my $EXIT_STATUS_LOSE => 1;
+
+print "I'm thinking of a number from $LOWER_BOUND to $UPPER_BOUND...\n";
+my $secret = int($LOWER_BOUND + rand($UPPER_BOUND - $LOWER_BOUND + 1));
+
+while (prompt('Guess?') =~ /\s*(\d+)\s*/a) {
+    my $guess = int $1;
+
+    if ($guess == $secret) {
+        print "Correct! $secret was the number I was thinking of.\n";
+        exit $EXIT_STATUS_WIN;
+    }
+
+    printf "Too %s.\n", ($guess < $secret ? 'low' : 'high');
+}
+
+# any non-numeric input, including "quit" and "exit," forefeits the game
+print "Goodbye! Better luck next time.\n";
+exit $EXIT_STATUS_LOSE;

@@ -1,0 +1,111 @@
+// strmode.cpp - find the min, max, and mode of some strings
+
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+class EmptyError : public std::runtime_error {
+public:
+    EmptyError():
+        std::runtime_error("operation undefined on empty container") { }
+};
+
+template <typename T>
+T maxval(const std::vector<T> v);
+
+template <typename T>
+std::vector<T> getModes(std::vector<T> v);
+
+void run();
+int main(int argc, const char* const* argv);
+
+template <typename T>
+T getMax(const std::vector<T> v)
+{
+    typename std::vector<T>::const_iterator it = v.begin();
+    if (it == v.end()) throw EmptyError();
+    T max = *it;
+    while (++it != v.end()) if (*it > max) max = *it;
+    return max;
+}
+
+template <typename T>
+std::vector<T> getModes(std::vector<T> v)
+{
+    // sort v (throwing a custom exception if it's empty)
+    if (v.empty()) throw EmptyError();
+    std::sort(v.begin(), v.end());
+    
+    // freq[i] will be the number of uniq[i] in v[i]
+    std::vector<T> uniq;
+    std::vector<size_t> freq;
+    uniq.reserve(v.size());
+    freq.reserve(v.size());
+
+    // populate uniq and freq
+    for (typename std::vector<T>::const_iterator it = v.begin();
+                it != v.end(); ++it) {
+        uniq.push_back(*it);
+        
+        size_t k = 1u;
+        for (; it + k < v.end() && it[k] == *it; ++k) { }
+        it += (k - 1);
+
+        freq.push_back(k);
+    }
+
+    // populate modes with frequency maxima
+    std::vector<T> modes;
+    for (size_t max = getMax(freq), i = 0u; i != uniq.size(); ++i)
+        if (freq[i] == max) modes.push_back(uniq[i]);
+
+    return modes;
+}
+
+void run()
+{
+    std::cout << "Please enter some strings, ending with a blank line.\n"
+              << "(That is, press Enter twice after the last string.)\n\n";
+
+    std::vector<std::string> lines;
+    for (std::string s; getline(std::cin, s) && !s.empty(); )
+        lines.push_back(s);
+
+    try {
+        std::vector<std::string> modes = getModes(lines);
+        
+        std::cout << "\nThe minimum value (under the string < relation) was:\n"
+                  << '\t' << lines.front() << '\n'
+                  << "\nThe maximum value (under the string > relation) was:\n"
+                  << '\t' << lines.back() << "\n\n"
+                  << "The mode" << (modes.size() == 1u ? "was" : "s were")
+                  << ":\n";
+
+        for (std::vector<std::string>::const_iterator it = modes.begin();
+                    it != modes.end(); ++it)
+            std::cout << '\t' << *it << '\n';
+    }
+    catch (EmptyError&) {
+        std::cout << "There was no minimum, maximum, or mode "
+                     "(since there were no data).\n";
+    }
+}
+
+int main(int argc, const char* const* argv)
+{
+    std::cout.exceptions(std::ios_base::badbit);
+    std::cin.exceptions(std::ios_base::badbit);
+    
+    try {
+        run();
+        std::cout << std::flush;
+    }
+    catch (std::ios_base::failure&) {
+        std::cerr << argv[0] << "error: I/O failure while attempting to "
+                  << (std::cin.bad() ? "read standard input"
+                                     : "write standard output") << '\n';
+    }
+}

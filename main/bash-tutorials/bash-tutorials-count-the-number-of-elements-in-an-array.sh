@@ -1,0 +1,2 @@
+mapfile -t
+echo ${#MAPFILE[@]}

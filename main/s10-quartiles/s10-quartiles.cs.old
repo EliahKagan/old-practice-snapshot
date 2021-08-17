@@ -1,0 +1,29 @@
+using System;
+
+internal static class Solution {
+    // Returns median of whole sorted array a, placing (lower) midpoint index
+    // in the output variable mid. Use this to compute the median of an array
+    // whose quartiles you intended subsequently to compute.
+    private static int Median(int a[], out int mid)
+    {
+        var delta = a.Length - 
+    }
+
+    // Returns median of sorted array a from start to stop.
+    // Use this to compute lower/upper quartiles (or octiles, etc.).
+    private static int RangedMedian(int[] a, int start, int stop)
+    {
+        var delta = stop - start;
+        var mid = start + delta / 2;
+        return delta % 2 == 0 ? a[mid] : (a[mid] + a[mid + 1]) / 2;
+    }
+
+    private static void Main()
+    {
+        var n = int.Parse(Console.ReadLine());
+        var a = Array.ConvertAll(Console.ReadLine(), int.Parse);
+        Array.Sort(a);
+
+
+    }
+}

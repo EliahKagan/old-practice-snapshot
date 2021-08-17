@@ -1,0 +1,63 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+use English qw(-no_match_vars);
+
+sub match_perlbang {
+    my $line = shift;
+
+    return $line =~ m{
+            ^\#!\s*(?:/usr/(?:local/)?bin/perl  # direct path to interpreter
+            |/usr/bin/env\s+perl)               # or the env trick
+            (?:\s\N*)?$                         # with or without arguments
+        }x;
+}
+
+sub match_copyright {
+    my $line = shift;
+
+    return $line =~ /\bCopyright\b/i;
+}
+
+sub choose_paths {
+    my @all_paths = @_;
+    my @paths;
+
+    for my $path (@all_paths) {
+        open my $in, '<', $path;
+
+        my $first = <$in>;
+        my $second = <$in>;
+
+        if (match_perlbang($first) && !match_copyright($second)) {
+            push @paths, $path;
+        }
+
+        close $in;
+    }
+
+    return @paths;
+}
+
+local @ARGV = choose_paths @ARGV;
+local $INPLACE_EDIT = '.bak';
+my $got_perlbang = 0;
+
+while (<>) {
+    # check again, to degrade gracefully when a race condition occurs
+    if ($INPUT_LINE_NUMBER == 1 && match_perlbang $_) {
+        $got_perlbang = 1;
+    } elsif ($INPUT_LINE_NUMBER == 2 && $got_perlbang && !match_copyright $_) {
+        print "## Copyright (C) 2017 by Eliah Kagan\n";
+    }
+} continue {
+    print;
+
+    if (eof ARGV) {
+        close ARGV;         # so $. / $INPUT_LINE_NUMBER will be correct
+        $got_perlbang = 0;  # so we don't reuse a previous file's hashbang
+    }
+}

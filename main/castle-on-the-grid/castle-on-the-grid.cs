@@ -1,0 +1,70 @@
+using System;
+using System.Collections.Generic;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.0.1")]
+
+internal static class Solution {
+    private static bool[,] ReadGrid() // true means accessible
+    {
+        var n = int.Parse(Console.ReadLine());
+        var grid = new bool[n, n];
+        
+        for (var i = 0; i != n; ++i) {
+            var row = Console.ReadLine().Trim();
+            for (var j = 0; j != n; ++j) grid[i, j] = row[j] == '.';
+        }
+        
+        return grid;
+    }
+    
+    private static int CountMoves(this bool[,] grid,
+                                  int a, int b, int c, int d)
+    {
+        var n = grid.GetLength(0);
+        var untouched = (bool[,])grid.Clone();
+        var q = new Queue<int>();
+        
+        Func<int, int, bool> enqueue_if_reachable = (int i, int j) => {
+            if (0 <= i && i < n && 0 <= j && j < n && grid[i, j]) {
+                if (untouched[i, j]) {
+                    untouched[i, j] = false;
+                    q.Enqueue(i);
+                    q.Enqueue(j);
+                }
+
+                return true;
+            }
+            
+            return false;
+        };
+        
+        Func<bool> dequeue = () => {
+            a = q.Dequeue();
+            b = q.Dequeue();
+            return a == c && b == d;
+        };
+        
+        enqueue_if_reachable(a, b);
+        
+        for (var moves = 0; q.Count != 0; ++moves) {
+            for (var len = q.Count / 2; len != 0; --len) {
+                if (dequeue()) return moves;
+                
+                for (var j = b; enqueue_if_reachable(a, ++j); ) { }
+                for (var j = b; enqueue_if_reachable(a, --j); ) { }
+                for (var i = a; enqueue_if_reachable(++i, b); ) { }
+                for (var i = a; enqueue_if_reachable(--i, b); ) { }
+            }
+        }
+        
+        return -1; // destination unreachable
+    }
+    
+    private static void Main()
+    {
+        var grid = ReadGrid();
+        var abcd = Array.ConvertAll(Console.ReadLine().Split(), int.Parse);
+        
+        Console.WriteLine(grid.CountMoves(abcd[0], abcd[1], abcd[2], abcd[3]));
+    }
+}

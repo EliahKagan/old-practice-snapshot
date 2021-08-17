@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+internal static class Solution {
+    private static void ReadPair(out int first, out int second)
+    {
+        var a = Array.ConvertAll(Console.ReadLine().Split(' '), int.Parse);
+
+        first = a[0];
+        second = a[1];
+    }
+
+    private static void Main()
+    {
+        int n, k;
+        ReadPair(out n, out k);
+
+        var luck = 0;
+        var important_contests = new List<int>(n);
+
+        foreach (var i in Enumerable.Range(0, n)) {
+            int li, ti;
+            ReadPair(out li, out ti);
+            
+            if (ti == 0) luck += li; // we will lose all unimportant contests
+            else important_contests.Add(li);
+        }
+
+        important_contests.Sort((x, y) => y - x); // monotone decreasing sort
+        luck += important_contests.Take(k).Sum();
+        luck -= important_contests.Skip(k).Sum();
+
+        Console.WriteLine(luck);
+    }
+}

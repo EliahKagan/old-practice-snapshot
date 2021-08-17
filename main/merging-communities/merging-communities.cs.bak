@@ -1,0 +1,58 @@
+using System;
+using System.Collections.Generic;
+
+[assembly:System.Reflection.AssemblyVersion("1.0.0.0")]
+
+internal sealed class DisjointSets {
+    internal DisjointSets(int n)
+    {
+        _elems = new Element[n];
+
+        for (var i = 0; i != n; ++i) {
+            _elems[i].Parent = i;
+            _elems[i].Size = 1;
+        }
+    }
+
+    internal IEnumerable<int> ComponentSizes()
+    {
+        for (var i = 0; i != _elems.Length; ++i)
+            if (i == _elems[i].Parent) yield return _elems[i].Size;
+    }
+
+    internal void Union(int i, int j) // union by size
+    {
+        i = FindSet(i);
+        j = FindSet(j);
+        if (i == j) return;
+
+        if (_elems[i].Size < _elems[j].Size) {
+            _elems[j].Size += _elems[i].Size;
+            _elems[i].Parent = j;
+        } else {
+            _elems[i].Size += _elems[j].Size;
+            _elems[j].Parent = i;
+        }
+    }
+
+    private int FindSet(int i)
+    {
+        var j = i;
+        while (j != _elems[j].Parent) j = _elems[j].Parent;
+
+        while (i != j) { // path compression
+            var p = _elems[i].Parent;
+            _elems[i].Parent = j;
+            i = p;
+        }
+
+        return j;
+    }
+
+    private readonly Element[] _elems;
+
+    private struct Element {
+        internal int Parent;
+        internal int Size;
+    }
+}

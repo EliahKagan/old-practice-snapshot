@@ -1,0 +1,67 @@
+#!/usr/bin/env ruby
+$VERBOSE = true
+
+# Disjoint set implementation using union by rank and full path compression.
+class DisjointSets
+  def initialize(size)
+    @parents = size.times.to_a
+    @ranks = Array.new(size, 0)
+  end
+
+  def count_components
+    @parents.lazy.with_index.count { |e, i| e == i }
+  end
+
+  # Returns true iff the sets weren't already the same and had to be united.
+  def union(i, j)
+    # find the ancestors and do nothing if i and j are already in the same set
+    i = find(i)
+    j = find(j)
+    return false if i == j
+
+    # unite by rank
+    if @ranks[i] < @ranks[j]
+      @parents[i] = j
+    else
+      @ranks[i] += 1 if @ranks[i] == @ranks[j]
+      @parents[j] = i
+    end
+
+    true
+  end
+
+  private def find(i)
+    # find the ancestor
+    j = i
+    j = @parents[j] while j != @parents[j]
+
+    # compress the path
+    while i != j
+      parent = @parents[i]
+      @parents[i] = j
+      i = parent
+    end
+
+    j
+  end
+end
+
+def read_record
+  gets.split.map!(&:to_i)
+end
+
+gets.to_i.times do
+  city_count, road_count, library_cost, road_cost = read_record
+
+  if road_cost < library_cost
+    # maximize connectivity and build one library per component
+    sets = DisjointSets.new(city_count + 1) # +1 because 0 is unused
+    road_repair_count = road_count.times.count { sets.union(*read_record) }
+    library_build_count = sets.count_components - 1 # -1 because 0 is unused
+    puts road_repair_count * road_cost + library_build_count * library_cost
+  else
+    # build a library in every city
+    road_count.times { gets }
+    puts city_count * library_cost
+  end
+end

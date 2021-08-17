@@ -1,0 +1,67 @@
+In file included from /usr/include/c++/4.7/i686-linux-gnu/bits/c++allocator.h:34:0,
+                 from /usr/include/c++/4.7/bits/allocator.h:48,
+                 from /usr/include/c++/4.7/string:43,
+                 from /usr/include/c++/4.7/bits/locale_classes.h:42,
+                 from /usr/include/c++/4.7/bits/ios_base.h:43,
+                 from /usr/include/c++/4.7/ios:43,
+                 from /usr/include/c++/4.7/ostream:40,
+                 from /usr/include/c++/4.7/iostream:40,
+                 from coins.cpp:3:
+/usr/include/c++/4.7/ext/new_allocator.h: In instantiation of ‘class __gnu_cxx::new_allocator<const unsigned int>’:
+/usr/include/c++/4.7/bits/allocator.h:89:11:   required from ‘class std::allocator<const unsigned int>’
+/usr/include/c++/4.7/ext/alloc_traits.h:186:53:   required from ‘struct __gnu_cxx::__alloc_traits<std::allocator<const unsigned int> >’
+/usr/include/c++/4.7/bits/stl_vector.h:76:28:   required from ‘struct std::_Vector_base<const unsigned int, std::allocator<const unsigned int> >’
+/usr/include/c++/4.7/bits/stl_vector.h:208:11:   required from ‘class std::vector<const unsigned int>’
+coins.cpp:26:37:   required from here
+/usr/include/c++/4.7/ext/new_allocator.h:83:7: error: ‘const _Tp* __gnu_cxx::new_allocator<_Tp>::address(__gnu_cxx::new_allocator<_Tp>::const_reference) const [with _Tp = const unsigned int; __gnu_cxx::new_allocator<_Tp>::const_pointer = const unsigned int*; __gnu_cxx::new_allocator<_Tp>::const_reference = const unsigned int&]’ cannot be overloaded
+/usr/include/c++/4.7/ext/new_allocator.h:79:7: error: with ‘_Tp* __gnu_cxx::new_allocator<_Tp>::address(__gnu_cxx::new_allocator<_Tp>::reference) const [with _Tp = const unsigned int; __gnu_cxx::new_allocator<_Tp>::pointer = const unsigned int*; __gnu_cxx::new_allocator<_Tp>::reference = const unsigned int&]’
+coins.cpp: In function ‘int main()’:
+coins.cpp:33:31: error: assignment of read-only variable ‘max’
+In file included from /usr/include/c++/4.7/vector:70:0,
+                 from coins.cpp:6:
+/usr/include/c++/4.7/bits/vector.tcc: In instantiation of ‘void std::vector<_Tp, _Alloc>::_M_insert_aux(std::vector<_Tp, _Alloc>::iterator, const _Tp&) [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>; std::vector<_Tp, _Alloc>::iterator = __gnu_cxx::__normal_iterator<const unsigned int*, std::vector<const unsigned int> >; typename std::_Vector_base<_Tp, _Alloc>::pointer = const unsigned int*]’:
+/usr/include/c++/4.7/bits/stl_vector.h:893:4:   required from ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>; std::vector<_Tp, _Alloc>::value_type = const unsigned int]’
+coins.cpp:27:24:   required from here
+/usr/include/c++/4.7/bits/vector.tcc:333:4: error: assignment of read-only location ‘__position.__gnu_cxx::__normal_iterator<_Iterator, _Container>::operator*<const unsigned int*, std::vector<const unsigned int> >()’
+In file included from /usr/include/c++/4.7/i686-linux-gnu/bits/c++allocator.h:34:0,
+                 from /usr/include/c++/4.7/bits/allocator.h:48,
+                 from /usr/include/c++/4.7/string:43,
+                 from /usr/include/c++/4.7/bits/locale_classes.h:42,
+                 from /usr/include/c++/4.7/bits/ios_base.h:43,
+                 from /usr/include/c++/4.7/ios:43,
+                 from /usr/include/c++/4.7/ostream:40,
+                 from /usr/include/c++/4.7/iostream:40,
+                 from coins.cpp:3:
+/usr/include/c++/4.7/ext/new_allocator.h: In instantiation of ‘void __gnu_cxx::new_allocator<_Tp>::deallocate(__gnu_cxx::new_allocator<_Tp>::pointer, __gnu_cxx::new_allocator<_Tp>::size_type) [with _Tp = const unsigned int; __gnu_cxx::new_allocator<_Tp>::pointer = const unsigned int*; __gnu_cxx::new_allocator<_Tp>::size_type = unsigned int]’:
+/usr/include/c++/4.7/bits/stl_vector.h:175:4:   required from ‘void std::_Vector_base<_Tp, _Alloc>::_M_deallocate(std::_Vector_base<_Tp, _Alloc>::pointer, std::size_t) [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>; std::_Vector_base<_Tp, _Alloc>::pointer = const unsigned int*; std::size_t = unsigned int]’
+/usr/include/c++/4.7/bits/stl_vector.h:161:9:   required from ‘std::_Vector_base<_Tp, _Alloc>::~_Vector_base() [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>]’
+/usr/include/c++/4.7/bits/stl_vector.h:247:15:   required from ‘std::vector<_Tp, _Alloc>::vector() [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>]’
+coins.cpp:26:37:   required from here
+/usr/include/c++/4.7/ext/new_allocator.h:100:9: error: invalid conversion from ‘const void*’ to ‘void*’ [-fpermissive]
+In file included from /usr/include/c++/4.7/ext/new_allocator.h:34:0,
+                 from /usr/include/c++/4.7/i686-linux-gnu/bits/c++allocator.h:34,
+                 from /usr/include/c++/4.7/bits/allocator.h:48,
+                 from /usr/include/c++/4.7/string:43,
+                 from /usr/include/c++/4.7/bits/locale_classes.h:42,
+                 from /usr/include/c++/4.7/bits/ios_base.h:43,
+                 from /usr/include/c++/4.7/ios:43,
+                 from /usr/include/c++/4.7/ostream:40,
+                 from /usr/include/c++/4.7/iostream:40,
+                 from coins.cpp:3:
+/usr/include/c++/4.7/new:97:6: error:   initializing argument 1 of ‘void operator delete(void*)’ [-fpermissive]
+In file included from /usr/include/c++/4.7/bits/char_traits.h:41:0,
+                 from /usr/include/c++/4.7/ios:41,
+                 from /usr/include/c++/4.7/ostream:40,
+                 from /usr/include/c++/4.7/iostream:40,
+                 from coins.cpp:3:
+/usr/include/c++/4.7/bits/stl_algobase.h: In instantiation of ‘_BI2 std::__copy_move_backward_a(_BI1, _BI1, _BI2) [with bool _IsMove = false; _BI1 = const unsigned int*; _BI2 = const unsigned int*]’:
+/usr/include/c++/4.7/bits/stl_algobase.h:590:34:   required from ‘_BI2 std::__copy_move_backward_a2(_BI1, _BI1, _BI2) [with bool _IsMove = false; _BI1 = const unsigned int*; _BI2 = const unsigned int*]’
+/usr/include/c++/4.7/bits/stl_algobase.h:625:18:   required from ‘_BI2 std::copy_backward(_BI1, _BI1, _BI2) [with _BI1 = const unsigned int*; _BI2 = const unsigned int*]’
+/usr/include/c++/4.7/bits/vector.tcc:329:4:   required from ‘void std::vector<_Tp, _Alloc>::_M_insert_aux(std::vector<_Tp, _Alloc>::iterator, const _Tp&) [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>; std::vector<_Tp, _Alloc>::iterator = __gnu_cxx::__normal_iterator<const unsigned int*, std::vector<const unsigned int> >; typename std::_Vector_base<_Tp, _Alloc>::pointer = const unsigned int*]’
+/usr/include/c++/4.7/bits/stl_vector.h:893:4:   required from ‘void std::vector<_Tp, _Alloc>::push_back(const value_type&) [with _Tp = const unsigned int; _Alloc = std::allocator<const unsigned int>; std::vector<_Tp, _Alloc>::value_type = const unsigned int]’
+coins.cpp:27:24:   required from here
+/usr/include/c++/4.7/bits/stl_algobase.h:581:18: error: no matching function for call to ‘std::__copy_move_backward<false, true, std::random_access_iterator_tag>::__copy_move_b(const unsigned int*&, const unsigned int*&, const unsigned int*&)’
+/usr/include/c++/4.7/bits/stl_algobase.h:581:18: note: candidate is:
+/usr/include/c++/4.7/bits/stl_algobase.h:557:9: note: template<class _Tp> static _Tp* std::__copy_move_backward<_IsMove, true, std::random_access_iterator_tag>::__copy_move_b(const _Tp*, const _Tp*, _Tp*) [with _Tp = _Tp; bool _IsMove = false]
+/usr/include/c++/4.7/bits/stl_algobase.h:557:9: note:   template argument deduction/substitution failed:
+/usr/include/c++/4.7/bits/stl_algobase.h:581:18: note:   deduced conflicting types for parameter ‘_Tp’ (‘unsigned int’ and ‘const unsigned int’)

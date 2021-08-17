@@ -1,0 +1,17 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+sub printenv {
+    my $key = shift;
+    return print "$key=$ENV{$key}\n";
+}
+
+if (@ARGV) {
+    for my $key (@ARGV) {
+        if (exists $ENV{$key}) { printenv $key }
+    }
+} else {
+    for my $key (sort keys %ENV) { printenv $key }
+}

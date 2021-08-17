@@ -1,0 +1,36 @@
+
+namespace {
+    // For each edge (i, j) in the graph, adds (j, i) if not already present.
+    void makeUndirected(int (*const g)[MAX], const int v)
+    {
+        const auto istop = v - 1;
+        for (auto i = 0; i != istop; ++i) {
+            for (auto j = i + 1; j != v; ++j)
+                g[i][j] = g[j][i] = g[i][j] | g[j][i];
+        }
+    }
+    
+    // Assumes the graph g is undirected and checks if the component containing
+    // the vertex i is bipartite. Note: mutates g by coloring its vertices.
+    bool isBipartiteComponent(int (*const g)[MAX], const int v, const int i)
+    {
+        enum Coloring { not_reachable = 0, uncolored = 1, red = 2, blue = 3 };
+        
+        
+    }
+}
+
+/*The function takes an adjacency matrix representation of the graph (g)
+and an integer(v) denoting the no of vertices as its arguments.
+You are required to complete below method */
+bool isBipartite(int (*const g)[MAX], const int v)
+{
+    assert(0 < v && v <= MAX);
+    
+    makeUndirected(g, v);
+    
+    for (auto i = 0; i != v; ++i)
+        if (!isBipartiteComponent(g, v, i)) return false;
+    
+    return true;
+}

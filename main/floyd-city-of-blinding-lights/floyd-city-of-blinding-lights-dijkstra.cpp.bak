@@ -1,0 +1,100 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <cstdio>
+#include <limits>
+#include <queue>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace {
+    using std::size_t;
+
+    using SparseMatrix = std::unordered_map<std::pair<unsigned, unsigned>,
+                                            unsigned>;
+
+    struct OutEdge {
+        unsigned dest, weight;
+    };
+
+    using AdjacencyList = std::vector<std::vector<OutEdge>>;
+
+    constexpr auto infinity = std::numeric_limits<unsigned>::max();
+
+    SparseMatrix read_distance_matrix(unsigned edge_count)
+    {
+        SparseMatrix distances (static_cast<size_t>(edge_count) * 4u / 3u);
+
+        while (edge_count--) {
+            unsigned src {}, dest {}, weight {};
+            (void)std::scanf("%u%u%u", &src, &dest, &weight);
+            if (src == dest) continue;
+
+            // The problem description says that subsequently received parallel
+            // edges replace previous ones, even if their weights are larger.
+            distances[{src, dest}] = weight;
+        }
+
+        return distances;
+    }
+
+    AdjacencyList build_adjacency_list(const unsigned vertex_count,
+                                       const SparseMatrix& distances)
+    {
+        AdjacencyList adj (vertex_count);
+
+        for (const auto& edge : distances) {
+            const auto src = edge.first.first, dest = edge.first.second;
+            const auto weight = edge.second;
+
+            if (src >= vertex_count || dest >= vertex_count)
+                throw std::out_of_range{"vertex out of range"};
+
+            adj[src].push_back({dest, weight});
+        }
+
+        return adj;
+    }
+
+    std::vector<unsigned> dijkstra(const AdjacencyList& adj,
+                                   const unsigned start)
+    {
+        std::vector<unsigned> lengths (adj.size(), infinity);
+
+        return lengths; // FIXME: actually do Dijkstra's algorithm first!
+    }
+
+    void run_queries(const AdjacencyList& adj, int query_count)
+    {
+        std::vector<std::vector<unsigned>> memo (adj.size());
+
+        while (query_count-- > 0) {
+            unsigned src {}, dest {};
+            (void)std::scanf("%u%u", &src, &dest);
+
+            auto& lengths = memo.at(src);
+            if (lengths.empty()) lengths = dijkstra(adj, src);
+            const auto length = lengths.at(dest);
+
+            if (length == infinity) std::puts("-1");
+            else std::printf("%u\n", length);
+        }
+    }
+}
+
+int main()
+{
+    size_t vertex_count {}, edge_count {};
+    (void)std::scanf("%zu%zu", &vertex_count, &edge_count);
+    ++vertex_count; // for 1-based indexing
+
+    const auto adj = build_adjacency_list(vertex_count,
+                                          read_distance_matrix(edge_count));
+
+    int query_count {};
+    (void)std::scanf("%d", &query_count);
+
+    run_queries(adj, query_count);
+}

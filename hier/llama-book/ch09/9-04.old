@@ -1,0 +1,25 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+use English qw(-no_match_vars);
+
+#local $INPLACE_EDIT = '.bak';
+
+while (<>) {
+    if ($INPUT_LINE_NUMBER == 1) {
+        s@#!\s*(?:/usr/(?:local/)?bin/perl  # direct path to interpreter
+                |/usr/bin/env\s+perl)       # or the env trick
+                (?:\s\N*)?\n\K              # with or without arguments
+         @\#\#\ Copyright\ (C)\ 2017\ by\ Eliah\ Kagan  # add as second line
+         @i
+    }
+} continue {
+    if (eof ARGV) {
+        close ARGV;  # so $. / $NR / $INPUT_LLINE_NUMBER will be correct
+    } else {
+        print;
+    }
+}

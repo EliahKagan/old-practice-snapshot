@@ -1,0 +1,132 @@
+//Initial Template for C++
+
+#include "duplicate-subtrees.h" //#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+	int data;
+	struct Node* left, *right;
+};
+
+Node* newNode(int data)
+{
+	Node* temp = new Node;
+	temp->data = data;
+	temp->left = temp->right = NULL;
+	return temp;
+}
+
+void printAllDups(Node* root);
+
+int main()
+{
+  int t;
+  struct Node *child;
+  scanf("%d\n", &t);
+  while (t--)
+  {
+     map<int, Node*> m;
+     int n;
+     scanf("%d\n",&n);
+     struct Node *root = NULL;
+     while (n--)
+     {
+        Node *parent;
+        char lr;
+        int n1, n2;
+        scanf("%d %d %c", &n1, &n2, &lr);
+        if (m.find(n1) == m.end())
+        {
+           parent = newNode(n1);
+           m[n1] = parent;
+           if (root == NULL) root = parent;
+        }
+        else parent = m[n1];
+        child = newNode(n2);
+        if (lr == 'L')parent->left = child;
+        else parent->right = child;
+        m[n2]  = child;
+     }
+     printAllDups(root);
+     cout<<endl;
+  }
+  return 0;
+}
+
+namespace {
+    constexpr size_t hashing_prime {31u};
+
+    struct Key {
+        size_t data, left_id, right_id;
+        inline Key(int val, size_t left_id, size_t right_id);
+    };
+
+    inline Key::Key(const int val, const size_t left_id, const size_t right_id)
+        : data{static_cast<size_t>(val)}, left_id{left_id}, right_id{right_id}
+    {
+    }
+
+    inline bool operator==(const Key& lhs, const Key& rhs)
+    {
+        return lhs.data == rhs.data && lhs.left_id == rhs.left_id
+                                    && lhs.right_id == rhs.right_id;
+    }
+
+    inline bool operator!=(const Key& lhs, const Key& rhs)
+    {
+        return !(lhs == rhs);
+    }
+}
+
+namespace std {
+    template<>
+    struct hash<Key> {
+        inline size_t operator()(const Key& key) const;
+    };
+
+    inline size_t hash<Key>::operator()(const Key& key) const
+    {
+        return hashing_prime * hashing_prime * key.data
+             + hashing_prime * key.left_id
+             + key.right_id;
+    }
+}
+
+void printAllDups(Node* const root)
+{
+    unordered_map<Key, size_t> ids; // (val, left id #, right id #) -> id #
+    vector<int> root_data;          // id # -> the subtree's root datum
+    vector<bool> duped;             // duped[i] is true iff #i is duped
+
+    function<size_t(const Node*)> identify = [&](const Node* const node) {
+        if (node == nullptr) return numeric_limits<size_t>::max();
+
+        const Key key {node->data, identify(node->left),
+                                   identify(node->right)};
+        const auto p = ids.find(key);
+        if (p == ids.end()) {
+            const auto i = root_data.size();
+            ids.emplace(key, i);
+            root_data.push_back(node->data);
+            duped.push_back(false); // not yet duped
+            return i;
+        } else {
+            const auto i = p->second;
+            duped[i] = true; // was found, so this dupes it
+            return i;
+        }
+    };
+
+    identify(root);
+
+    vector<int> results;
+    const auto size = root_data.size();
+    for (size_t i {0u}; i != size; ++i)
+        if (duped[i]) results.push_back(root_data[i]);
+
+    if (results.empty()) fputs("-1", stdout);
+    else {
+        sort(begin(results), end(results));
+        for (const auto datum : results) printf("%d ", datum);
+    }
+}

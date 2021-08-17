@@ -1,0 +1,64 @@
+// vectored.c - registering and using a vectored exception handler in Windows
+
+#ifndef UNICODE
+#define UNICODE
+#endif /* UNICODE */
+
+#ifndef _UNICODE
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#endif
+#define _UNICODE
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+#endif /* _UNICODE */
+
+#include <assert.h>
+#include <malloc.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <Windows.h>
+
+static const size_t k_size = 1000000000ul;
+static volatile DWORD g_code = 0ul;
+
+LONG WINAPI handle_stack_overflow(PEXCEPTION_POINTERS infop)
+{
+    g_code = infop->ExceptionRecord->ExceptionCode;
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+int wmain(int argc, wchar_t **argv)
+{
+    assert(argc > 0);
+
+    PVOID h = AddVectoredExceptionHandler(true, handle_stack_overflow);
+    if (h == NULL) {
+        fwprintf(stderr, L"%ls: error: can't register exception handler\n",
+                 argv[0]);
+        return EXIT_FAILURE;
+    }
+    
+    const void *const p = _alloca(k_size);
+
+    int status;
+    if (g_code == 0ul) {
+        wprintf(L"%Iu byes allocated successfully at %p.\n", k_size, p);
+        status = EXIT_SUCCESS;
+    } else {
+        fwprintf(stderr, L"%ls: error: can't allocate %Iu bytes: "
+                 L"exception #%lu\n", argv[0], k_size, g_code);
+        status = EXIT_FAILURE;
+    }
+
+    if (!RemoveVectoredExceptionHandler(h)) {
+        fwprintf(stderr, L"%ls: warning: can't unregister exception handler\n",
+                 argv[0]);
+    }
+
+    return status;
+}

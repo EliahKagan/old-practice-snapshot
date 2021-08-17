@@ -1,0 +1,107 @@
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+final class Node<E> {
+    static <E> Node<E> Create(final E key, final Node<E> left,
+                                           final Node<E> right) {
+        return new Node<E>(key, left, right);
+    }
+
+    static <E> Node<E> Create(final E key) {
+        return new Node<E>(key);
+    }
+
+    E key;
+    Node<E> left, right;
+
+    private Node(final E key, final Node<E> left, final Node<E> right) {
+        this.key = key;
+        this.left = left;
+        this.right = right;
+    }
+
+    private Node(final E key) {
+        this(key, null, null);
+    }
+}
+
+final class Traverse {
+    static <E> List<E> levelOrder(final Node<E> root) {
+        var ret = new ArrayList<E>();
+
+        var queue = new ArrayDeque<Node<E>>();
+        for (queue.add(root); !queue.isEmpty(); ) {
+            var node = queue.remove();
+
+            if (node != null) {
+                ret.add(node.key);
+                queue.add(node.left);
+                queue.add(node.right);
+            }
+        }
+
+        return ret;
+    }
+
+    static <E> List<E> preOrder(final Node<E> root) {
+        var ret = new ArrayList<E>();
+
+        var stack = new ArrayDeque<Node<E>>();
+        for (stack.push(root); !stack.isEmpty(); ) {
+            var node = stack.pop();
+
+            if (node != null) {
+                ret.add(node.key);
+                stack.push(node.right);
+                stack.push(node.left);
+            }
+        }
+
+        return ret;
+    }
+
+    static <E> List<E> inOrder(final Node<E> root) {
+        var stack = new ArrayDeque<Node<E>>();
+
+        Consumer<Node<E>> goLeft = node -> {
+            for (; node != null; node = node.left) stack.push(node);
+        };
+
+        var ret = new ArrayList<E>();
+
+        for (goLeft.accept(root); !stack.isEmpty(); ) {
+            var node = stack.pop();
+            ret.add(node.key);
+            goLeft.accept(node.right);
+        }
+
+        return ret;
+    }
+
+    private Traverse() { throw new AssertionError(); }
+}
+
+final class UnitTest {
+    public static void main(final String[] args) {
+        var left = Node.Create("Bob", Node.Create("Alice"),
+                                      Node.Create("Carl"));
+
+        var right = Node.Create("Freya", Node.Create("Esther"),
+                                         Node.Create("Gordon"));
+
+        var root = Node.Create("Dale", left, right);
+
+        print("Level order", Traverse.levelOrder(root));
+        print("In-order", Traverse.inOrder(root));
+    }
+
+    private static void print(final String label,
+                              final Iterable<? extends CharSequence> elems) {
+        System.out.format("%15s: %s%n", label, String.join(" ", elems));
+        //System.out.println(String.join(" ", elems));
+    }
+
+    private UnitTest() { throw new AssertionError(); }
+}

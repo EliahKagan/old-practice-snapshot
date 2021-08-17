@@ -1,0 +1,6 @@
+Notes on
+  - course-schedule-ii-both-scratch.py
+  - course-schedule-ii-both-scratch2.py
+
+This was an attempt to implement Kahn's algorithm in a way that would always
+emit vertices in the exact same order as recursive DFS. It did not succeed.

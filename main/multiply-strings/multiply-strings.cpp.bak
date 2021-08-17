@@ -1,0 +1,30 @@
+class Solution {
+public:
+    static string multiply(const string& a, const string& b);
+
+private:
+    static void reversed_add(string& acc, string& elem);
+
+    // Returns (sum, carry).
+    static tuple<char, char> digit_add(const char c, const char d);
+};
+
+string Solution::multiply(const string& a, const string& b)
+{
+
+}
+
+void Solution::reversed_add(string& acc, string& elem)
+{
+    if (acc.capacity() < elem.capacity()) swap(acc, elem);
+    acc.resize(max(acc.size(), elem.size()) + 1u, '0');
+
+}
+
+inline tuple<char, char> Solution::digit_add(const char c, const char d)
+{
+    switch (c) {
+        case '0':
+
+    }
+}

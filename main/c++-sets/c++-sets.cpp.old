@@ -1,0 +1,46 @@
+#include <algorithm>
+#include <cstddef>
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+namespace {
+    void print(const std::vector<int>::const_iterator first,
+               const std::vector<int>::const_iterator last)
+    {
+        static auto out = std::ostream_iterator<int>(std::cout, " ");
+
+        if (first == last) {
+            std::cout << "0\n";
+        } else {
+            std::copy(first, last, out);
+            std::cout << '\n';
+        }
+    }
+}
+
+int main()
+{
+    std::ios_base::sync_with_stdio(false);
+
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        std::vector<int>::size_type m {}, n {};
+        std::cin >> m >> n;
+
+        std::vector<int> a (m), b (n), c (m + n);
+        for (auto& e : a) std::cin >> e;
+        for (auto& e : b) std::cin >> e;
+
+        std::sort(std::begin(a), std::end(a));
+        std::sort(std::begin(b), std::end(b));
+
+        const auto ap = std::cbegin(a), aq = std::cend(a);
+        const auto bp = std::cbegin(b), bq = std::cend(b);
+        const auto cp = std::begin(c);
+
+        print(cp, std::set_union(ap, aq, bp, bq, cp));
+        print(cp, std::set_difference(ap, aq, bp, bq, cp));
+        print(cp, std::set_intersection(ap, aq, bp, bq, cp));
+    }
+}

@@ -1,0 +1,26 @@
+final class Solution {
+    public static void main(final String[] args)
+    {
+        try (java.util.Scanner sc = new java.util.Scanner(System.in)) {
+            while (sc.hasNextInt()) {
+                int n = sc.nextInt();
+                final boolean[] a = new boolean[n + 1];
+
+                for (boolean found = false; ; ) {
+                    final int i = sc.nextInt();
+
+                    if (!a[i]) a[i] = true;
+                    else if (found) {
+                        System.out.println(i);
+                        break;
+                    } else {
+                        System.out.format("%d ", i);
+                        found = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

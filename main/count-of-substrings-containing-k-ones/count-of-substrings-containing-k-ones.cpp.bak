@@ -1,0 +1,52 @@
+#include <cassert>
+#include <iostream>
+#include <string>
+
+namespace {
+    using Delta = std::string::difference_type;
+
+    using It = std::string::const_iterator;
+
+    // Counts the number of ranges that contain only 0s.
+    Delta count_zero_ranges(const std::string& text) noexcept
+    {
+
+    }
+
+    // Counts the number of subranges with the same number of 1s as the range
+    // [first, last), which it assumes contains at least one 1.
+    Delta count_same_pop_subranges(const It first, const It last)
+    {
+
+    }
+
+    // Counts the number of ranges that contain exactly pop ones.
+    Delta count_pop_substrs(const std::string& text, Delta pop) noexcept
+    {
+        if (pop <= 0) return pop == 0 ? count_zero_ranges(text) : 0;
+        
+        const auto last = text.cend();
+        auto left = text.cbegin(), right = left;
+
+        for (Delta count {0}; ; ) {
+            // expand rightward to increase population
+            while (right != last && (*right == '0' || --pop != 0)) ++right;
+            if (right == last) return count;
+            assert(pop == 0);
+
+            // expand rightward some more to consume and count trailing zeros
+            Delta right_count {1};
+            while (++right != last && *right == '0') ++right_count;
+
+            // contract leftward to consume and count leading zeros
+            Delta left_count {1};
+            for (; *left == '0'; ++left) ++left_count;
+
+            // add the count of this interval's target-population subintervals
+            count += right_count * left_count;
+
+            ++left;
+            ++pop;
+        }
+    }
+}

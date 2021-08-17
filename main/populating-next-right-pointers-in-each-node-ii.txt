@@ -1,0 +1,2 @@
+The solution to populating-next-right-pointers-in-each-node.java works for this
+problem too, since I did rely on the property that the tree was complete.

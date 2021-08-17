@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""Roads and Libraries (HackerRank) - by iterative DFS"""
+
+
+def read_value():
+    """Reads a line of input as a single integer."""
+    return int(input())
+
+
+def read_record():
+    """Reads a line of input as a sequence of integers."""
+    return map(int, input().split())
+
+
+def read_graph(vertex_count, edge_count):
+    """Reads the edges of an undirected graph as an adjacency list."""
+    adj = [[] for _ in range(vertex_count + 1)]  # +1 for 1-based indexing
+
+    for _ in range(edge_count):
+        u, v = read_record()
+        adj[u].append(v)
+        adj[v].append(u)
+
+    return adj
+
+
+def count_components(adj):
+    """Computes the number of components of a graph from its adjacency list."""
+    vis = [False] * len(adj)
+    stack = []
+
+    def fill(start):
+        vis[start] = True
+        stack.append(start)
+
+        while stack:
+            for neighbor in adj[stack.pop()]:
+                if vis[neighbor]:
+                    continue
+                vis[neighbor] = True
+                stack.append(neighbor)
+
+    count = 0
+    for start in range(1, len(adj)):
+        if vis[start]:
+            continue
+        fill(start)
+        count += 1
+
+    return count
+
+
+def run():
+    """Reads city/road graphs. Computes the cost to restore library access."""
+    for _ in range(read_value()):
+        city_count, road_count, library_cost, road_cost = read_record()
+        if road_cost < library_cost:
+            adj = read_graph(city_count, road_count)
+            component_count = count_components(adj)
+            road_count = city_count - component_count
+            print(component_count * library_cost + road_count * road_cost)
+        else:
+            for _ in range(road_count):
+                input()  # consume and discard edge information
+            print(city_count * library_cost)
+
+
+if __name__ == '__main__':
+    run()

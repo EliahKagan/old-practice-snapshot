@@ -1,0 +1,55 @@
+#ifdef NDEBUG
+#error Runtime assertions are unexpectedly disabled for this build.
+#endif
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <vector>
+
+namespace {
+    std::vector<int> get()
+    {
+        std::vector<int> a;
+        typename decltype(a)::size_type n {0u};
+        std::cin >> n;
+        a.reserve(n);
+
+        for (; n != 0u; --n) {
+            auto k = 0;
+            std::cin >> k;
+            a.push_back(k);
+        }
+
+        return a;
+    }
+
+    void put(const std::vector<int>& a)
+    {
+        auto sep = "";
+        for (const auto k : a) {
+            std::cout << sep << k;
+            sep = " ";
+        }
+
+        std::cout << '\n';
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        auto a = get();
+        decltype(a)::difference_type i {0}, j {0};
+        std::cin >> i >> j;
+
+        auto n = static_cast<decltype(a)::difference_type>(a.size());
+        assert(1 <= n && n <= 100 && 1 <= i && i <= j && j <= n);
+
+        const auto p = std::begin(a);
+        std::reverse(p + (i - 1), p + j);
+        put(a);
+    }
+}

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# This is a very rough heuristic. For example, I often write a .java file
+# without imports (or they're not from a package that starts "java") that
+# doesn't comtain my entry point class. And a C translation unit may forward-
+# declare all the external symbols it uses and thus require no #include
+# directive. (And of course this doesn't handle quoting, odd formatting, and
+# many other quite common constructs.) Please don't really use this code!
+
+declare -r c='^\s*#include\s*(<\S+\.h>|"\S+\.h")\s*$'
+declare -r java1='^\s*import\s+java\w?(\.(\w+|\*))*\s*;\s*$'
+declare -r java2a='^\s*public\s+static\s+void\s+main\s*\(\s*'
+declare -r java2b='(java\s*\.\s*lang\s*\.\s*)?String\s*\[\s*\]\s*'
+declare -r java2c='[[:alpha:]_]\w*\)\s*\{?\s*$'
+declare -r java2=$"${java2a}${java2b}${java2c}"
+
+declare lang=
+while [ -z "$lang" ] && read -r; do
+    if [[ $REPLY =~ $c ]]; then
+        lang=C
+    elif [[ $REPLY =~ $java1 ]] || [[ $REPLY =~ $java2 ]]; then
+        lang=Java
+    fi
+done
+
+echo ${lang:-Python}

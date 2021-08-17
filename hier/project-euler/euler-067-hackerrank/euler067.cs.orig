@@ -1,0 +1,47 @@
+using System;
+using System.Linq;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+
+internal static class Solution {
+    private const int Unknown = -1;
+    
+    private static int ReadValue() => int.Parse(Console.ReadLine());
+    
+    private static int[] ReadRow()
+        => Array.ConvertAll(Console.ReadLine().Split(), int.Parse);
+    
+    private static int[][] ReadGrid()
+        => Enumerable.Range(0, ReadValue()).Select(_ => ReadRow()).ToArray();
+    
+    private static int[] MakeBlankRow(int i)
+        => Enumerable.Repeat(Unknown, i).ToArray();
+    
+    private static int[][] MakeBlankGrid(int n)
+        => Enumerable.Range(1, n + 1).Select(MakeBlankRow).ToArray();
+    
+    private static int ComputeMaxPathSum(this int[][] grid)
+    {
+        var memo = MakeBlankGrid(grid.Length);
+        
+        Func<int, int, int> dfs = null;
+        dfs = (i, j) => {
+            if (i == grid.Length) return 0;
+            
+            if (memo[i][j] == Unknown) {
+                memo[i][j] = grid[i][j] + Math.Max(dfs(i + 1, j),
+                                                   dfs(i + 1, j + 1));
+            }
+            
+            return memo[i][j];
+        };
+        
+        return dfs(0, 0);
+    }
+    
+    private static void Main()
+    {
+        for (var t = ReadValue(); t > 0; --t)
+            Console.WriteLine(ReadGrid().ComputeMaxPathSum());
+    }
+}

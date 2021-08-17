@@ -1,0 +1,116 @@
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+struct node {
+    int data;
+    struct node *next;
+};
+
+static struct node *make_node(const int data, struct node *const next)
+{
+    struct node *const p = malloc(sizeof *p);
+    if (p == NULL) abort();
+    
+    p->data = data;
+    p->next = next;
+    
+    return p;
+}
+
+static struct node *create_list(int len, ...)
+{
+    struct node fake_head = { 0, NULL };
+    
+    va_list v;
+    va_start(v, len);
+    
+    for (struct node *p = &fake_head; len-- > 0; p = p->next)
+        p->next = make_node(va_arg(v, int), NULL);
+    
+    va_end(v);
+    
+    return fake_head.next;
+}
+
+static void destroy_list(struct node *head)
+{
+    while (head != NULL) {
+        struct node *next = head->next;
+        free(head);
+        head = next;
+    }
+}
+
+static void print(const struct node *head)
+{
+    printf("[ ");
+    for (; head != NULL; head = head->next) printf("%d ", head->data);
+    printf("]\n");
+}
+
+// Detaches and reverses a range of nodes, starting with first and ending just
+// before last, i.e., reverses [first, last). Returns the new first node.
+static struct node *reverse_range(struct node *first, struct node *last)
+{
+    struct node *prev = NULL;
+    
+    while (first != last) {
+        struct node *next = first->next;
+        first->next = prev;
+        prev = first;
+        first = next;
+    }
+    
+    return prev;
+}
+
+// Advances *pp by k nodes and returns true to indicate success, or
+// returns false to indicate failure and leaves **pp unmodified.
+static bool advance(struct node **const pp, int k)
+{
+    struct node *p = *pp;
+    for (; p != NULL && k > 0; --k) p = p->next;
+    if (k != 0) return false;
+    *pp = p;
+    return true;
+}
+
+// Reverse each successive length-k subinterval of the list starting at head.
+static struct node *reverse(struct node *head, const int k)
+{
+    struct node fake_head = { 0, head }, *p = &fake_head;
+    
+    for (; ; ) {
+        struct node *q = p;
+        if (!advance(&q, k)) break;
+        
+        struct node *r = q->next;
+        p->next = reverse_range(p->next, r);
+        q->next = r;
+    }
+    
+    return fake_head.next;
+}
+
+int main(void)
+{
+    struct node *head = create_list(8, 1, 2, 2, 4, 5, 6, 7, 8);
+    print(head);
+    head = reverse(head, 4);
+    print(head);
+    
+    // destroy_list(head);
+    
+    
+    /*
+    struct node *q = p;
+    if (!advance(&q, 4)) abort();
+    print(reverse_range(p, q));
+    //p->next = q;
+    //print(
+    
+    //destroy_list(p);
+    */
+}

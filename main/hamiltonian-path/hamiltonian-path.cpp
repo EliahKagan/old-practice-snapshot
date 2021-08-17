@@ -1,0 +1,67 @@
+#include <array>
+#include <cstddef>
+#include <functional>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+
+namespace {
+    constexpr std::size_t nmax {10u};
+    
+    using Graph = std::vector<std::vector<std::size_t>>; // adjacency lists
+    
+    Graph read_graph()
+    {
+        std::size_t n {}, m {};
+        std::cin >> n >> m;
+        if (n > nmax) throw std::out_of_range{"too many vertices"};
+        
+        Graph graph (n + 1u); // for 1-based indexing
+        
+        while (m-- != 0u) {
+            std::size_t u {}, v {};
+            std::cin >> u >> v;
+            
+            graph.at(u).push_back(v);
+            graph.at(v).push_back(u);
+        }
+        
+        return graph;
+    }
+    
+    inline std::size_t get_n(const Graph& graph) // returns vertex count
+    {
+        return graph.size() - 1u; // 1-based indexing (ignore graph[0])
+    }
+    
+    bool has_hamiltonian_path(const Graph& graph)
+    {
+        std::array<bool, nmax + 1u> vis {}; // visited list (1-based indexing)
+        
+        const std::function<bool(std::size_t, std::size_t)>
+        dfs = [&](const std::size_t u, const std::size_t n) {
+            if (n == 0u) return true;
+            vis[u] = true;
+            
+            for (const auto v : graph[u])
+                if (!vis[v] && dfs(v, n - 1u)) return true;
+            
+            vis[u] = false;
+            return false;
+        };
+        
+        const auto n = get_n(graph);
+        
+        for (std::size_t u {1u}; u <= n; ++u)
+            if (dfs(u, n - 1u)) return true;
+        
+        return false;
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t)
+        std::cout << has_hamiltonian_path(read_graph()) << '\n';
+}

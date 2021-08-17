@@ -1,0 +1,20 @@
+using System;
+using System.Linq;
+
+internal static class Solution {
+    private static void Main()
+    {
+        var n = int.Parse(Console.ReadLine());
+        var a = Console.ReadLine().Split().Select(int.Parse).Take(n).ToArray();
+        Array.Sort(a);
+
+        for (var i = 0; i != n; ) {
+            var j = i + 1;
+            while (j != n && a[j] <= a[i]) ++j;
+            Console.WriteLine(j - i); // cutting j - i sticks
+
+            for (var k = j; k != n; ++k) a[k] -= a[i];
+            i = j;
+        }
+    }
+}

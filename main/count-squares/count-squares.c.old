@@ -1,0 +1,16 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <stdio.h>
+#include <math.h>
+
+int main(void)
+{
+    int t = 0;
+    for ((void)scanf("%d", &t); t > 0; --t) {
+        long double n = 0.0L;
+        (void)scanf("%Lf", &n);
+        printf("%ld\n", lroundl(floorl(sqrtl(n))));
+    }
+}

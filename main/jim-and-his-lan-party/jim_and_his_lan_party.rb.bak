@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+$VERBOSE = true
+
+# When a game has not started, this value is reported as its start time.
+GAME_NOT_STARTED = -1
+
+# A disjoint-set union data structure, with elements/vertices called players,
+# where each vertex has a color called a game, and where each disjoint set
+# tracks how many players of each game (vertices of each color) it contains.
+# Each connect() operation increments a clock, and the times at which each game
+# (color) has all its players (vertices) connected in a single component,
+# possibly also connected to players of other games (vertices of other colors),
+# is made available by enumerating the DisjointPlayerSets object.
+class DisjointPlayerSets
+  include Enumerable
+
+  # Initializes the disjoint sets of players with player -> game mappings held
+  # by each disjoint set's leader.
+  # @param player_games   Player i will play the game player_games[i].
+  # @param game_count     Games will be in the range [0, game_count)
+  def initialize(player_games, game_count)
+    player_count = player_games.size
+
+    # set leader -> (game -> negative population)
+    @contribs = Array.new(player_count)
+
+    # player -> nonnegative DSU parent, or negative DSU rank if set leader
+    @parents_or_ranks = Array.new(player_count, -1)
+
+    # game -> negative population target, or nonnegative start time if started
+    @pop_targets_or_start_times = Array.new(game_count, 0)
+
+    # current time, in ticks, for the simulation (one connection per tick)
+    @time = 0
+
+    # determine how many players are needed for each game
+    player_games.each { |game| @pop_targets_or_start_times[game] -= 1 }
+
+    # start single-player games immediately
+    @pop_targets_or_start_times.each_with_index do |pop_target, game|
+      @pop_targets_or_start_times[game] = 0 if pop_target == -1
+    end
+
+    # record players' population contributions toward multiplayer games
+    @player_games.each_with_index do |game, player|
+      contrib = Hash.new(0)
+      contrib[game] = -1
+      @contribs[player] = contrib
+    end
+  end
+
+  # Iterates through game start times.
+  def each
+    return to_enum unless block_given?
+
+    @pop_targets_or_start_times.each do |start_time|
+      yield start_time.negative? ? GAME_NOT_STARTED : start_time
+    end
+  end
+
+  # Advances the clock, joining and merging players' contributions.
+  # @param player1  One endpoint of the new player-to-player edge.
+  # @param player2  The other endpoint of the new player-to-player edge.
+  def connect(player1, player2)
+    # one connection per tick of the clock
+    @time += 1
+
+    # actually connect the sublans (if they are separate)
+  end
+
+  # Finds the leader of the player's connected sublan.
+  # @param player   The player whose leader is sought.
+  private def find_set(player)
+  end
+
+  # Unites sublans by rank if they were separate.
+  # @param player1  An element of the first disjoint set being united.
+  # @param player2  An element of hte second disjoint set being united.
+  # @return The old leaders as [parent, child], or nil if already united.
+  private def union(player1, player2)
+  end
+end

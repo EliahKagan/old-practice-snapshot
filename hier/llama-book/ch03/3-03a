@@ -1,0 +1,11 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+
+chomp(@ARGV);
+my $sep = (grep(/^(?:-s|--spaces)$/, @ARGV) ? ' ' : "\n");
+
+chomp(my @lines = <STDIN>);
+say join($sep, sort @lines);

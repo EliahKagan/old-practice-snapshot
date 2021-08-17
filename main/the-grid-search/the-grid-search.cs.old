@@ -1,0 +1,39 @@
+using System;
+using System.Linq;
+
+internal struct Dimensions {
+    public static Dimensions Get()
+    {
+        var a = Array.ConvertAll(Console.ReadLine().Split(' '), int.Parse);
+        return new Dimensions(a[0], a[1]);
+    }
+
+    public readonly int Rows, Cols;
+
+    public Dimensions(int rows, int cols)
+    {
+        Rows = rows;
+        Cols = cols;
+    }
+}
+
+internal static class Solution {
+    private static bool HasSubgrid(string[] major, Dimensions dmajor,
+                                   string[] minor, Dimensions dminor)
+    {
+
+    }
+
+    private static void Main()
+    {
+        foreach (var t in Enumerable.Range(0, int.Parse(Console.ReadLine()))) {
+            var dmajor = Dimensions.Get();
+
+            var major = new string[dmajor.Rows];
+            for (var i = 0; i != dmajor.Rows; ++i)
+                major[i] = Console.ReadLine();
+
+            
+        }
+    }
+}

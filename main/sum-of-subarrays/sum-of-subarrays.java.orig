@@ -1,0 +1,34 @@
+import java.util.Scanner;
+import java.util.stream.IntStream;
+
+final class Solution {
+    private static final long MOD = 1_000_000_007;
+    
+    private static long pow(final long base, final int exponent)
+    {
+        if (exponent == 0) return 1L;
+        
+        long r = pow(base, exponent / 2);
+        r *= r;
+        if (exponent % 2 != 0) r *= base;
+        return r % MOD;
+    }
+    
+    private static long readSubarraySumSum(final Scanner sc)
+    {
+        final int n = sc.nextInt();
+        
+        return IntStream.range(0, n).mapToLong(i -> sc.nextLong()).sum() % MOD
+                * pow(2L, n - 1) % MOD;
+    }
+    
+    public static void main(final String[] args)
+    {
+        try (final Scanner sc = new Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t)
+                System.out.println(readSubarraySumSum(sc));
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

@@ -1,0 +1,28 @@
+#include <iostream>
+#include <iterator>
+#include <regex>
+#include <set>
+#include <string>
+
+int main()
+{
+    const std::regex pattern {R"(\d{3}-\d\d-\d\d-\d{8}-[A-Z])",
+            std::regex_constants::ECMAScript | std::regex_constants::optimize};
+    std::smatch match;
+
+    std::set<std::string> pincodes; // automatically lexicographically sorted
+
+    auto n = 0;
+    for (std::cin >> n >> std::ws; n > 0; --n) {
+        std::string line;
+        std::getline(std::cin, line);
+
+        if (std::regex_match(line, match, pattern))
+            pincodes.insert(match[0].str());
+    }
+
+    if (pincodes.empty())
+        std::cout << "JUNK\n";
+    else
+        for (const auto& code : pincodes) std::cout << code << '\n';
+}

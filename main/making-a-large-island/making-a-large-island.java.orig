@@ -1,0 +1,66 @@
+class Solution {
+    public int largestIsland(final int[][] grid) {
+        final List<Integer> areas = new ArrayList<>();
+        areas.add(null); // we won't query land area contributions from water
+        areas.add(null); // no "1"s left to query once we paint the islands
+
+        int maxArea = 0;
+
+        for (int i = 0; i != grid.length; ++i) {
+            for (int j = 0; j != grid[i].length; ++j) {
+                if (grid[i][j] != 1) continue; // water, or already painted
+
+                final int area = floodFill(grid, i, j, areas.size());
+                areas.add(area);
+                maxArea = Math.max(maxArea, area);
+            }
+        }
+
+        for (int i = 0; i != grid.length; ++i) {
+            for (int j = 0; j != grid[i].length; ++j) {
+                if (grid[i][j] != 0) continue; // bridges on land are pointless
+
+                final int[] adj = { getColor(grid, i, j - 1),   // west
+                                    getColor(grid, i, j + 1),   // east
+                                    getColor(grid, i - 1, j),   // north
+                                    getColor(grid, i + 1, j) }; // south
+
+                int area = 1;
+
+                for (int h = 0; h != adj.length; ++h) {
+                    final int color = adj[h];
+                    if (color == 0) continue;
+
+                    // ensure we count each color at most once
+                    for (int k = h + 1; k != adj.length; ++k)
+                        if (adj[k] == color) adj[k] = 0;
+
+                    area += areas.get(color);
+                }
+
+                maxArea = Math.max(maxArea, area);
+            }
+        }
+
+        return maxArea;
+    }
+
+    private static int floodFill(final int[][] grid,
+                                 final int i, final int j, final int toColor) {
+        final int color = getColor(grid, i, j);
+        if (color == 0 || color == toColor) return 0; // water, or already done
+
+        grid[i][j] = toColor;
+
+        return 1 + floodFill(grid, i, j - 1, toColor)   // west
+                 + floodFill(grid, i, j + 1, toColor)   // east
+                 + floodFill(grid, i - 1, j, toColor)   // north
+                 + floodFill(grid, i + 1, j, toColor);  // south
+    }
+
+    private static int getColor(final int[][] grid, final int i, final int j) {
+        return i < 0 || i >= grid.length || j < 0 || j >= grid[i].length
+                ? 0
+                : grid[i][j];
+    }
+}

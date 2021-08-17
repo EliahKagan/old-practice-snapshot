@@ -1,0 +1,129 @@
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+
+final class Algo {
+    static <K, V> void heapSort(final List<K> keys, final List<V> values,
+                                final Comparator<K> comparator) {
+        final int len = keys.size();
+
+        if (len != values.size()) {
+            throw new IllegalArgumentException(
+                    "must have the same number of keys as values");
+        }
+
+        if (len < 2) return;
+
+        final class Helper {
+            private void heapifyDown(int start, final int stop) {
+                for (; ; ) {
+                    final int child = pickChild(start, stop);
+                    if (child == -1 || orderOK(start, child)) break;
+                    swap(start, child);
+                    start = child;
+                }
+            }
+
+            // Pick the left or right child of start, or -1 if neither exists.
+            private int pickChild(final int start, final int stop) {
+                final int leftChild = start * 2 + 1;
+                if (leftChild >= stop) return -1;
+
+                final int rightChild = leftChild + 1;
+
+                return rightChild == stop || orderOK(leftChild, rightChild)
+                        ? leftChild
+                        : rightChild;
+            }
+
+            private boolean orderOK(final int i, final int j) {
+                return comparator.compare(keys.get(i), keys.get(j)) >= 0;
+            }
+
+            private void swap(final int i, final int j) {
+                swap(keys, i, j);
+                swap(values, i, j);
+            }
+
+            private <T> void swap(final List<T> a, final int i, final int j) {
+                final T tmp = a.get(i);
+                a.set(i, a.get(j));
+                a.set(j, tmp);
+            }
+        }
+
+        final Helper helper = new Helper();
+
+        for (int start = len / 2; start != -1; --start)
+            helper.heapifyDown(start, len);
+
+        for (int stop = len - 1; stop != 0; --stop) {
+            helper.swap(0, stop);
+            helper.heapifyDown(0, stop);
+        }
+    }
+
+    static <K, V> void heapSort(final K[] keys, final V[] values,
+                                final Comparator<K> comparator) {
+        heapSort(Arrays.asList(keys), Arrays.asList(values), comparator);
+    }
+
+    static <K extends Comparable<? super K>, V> void
+    heapSort(final List<K> keys, final List<V> values) {
+        heapSort(keys, values, Comparator.naturalOrder());
+    }
+
+    static <K extends Comparable<? super K>, V> void
+    heapSort(final K[] keys, final V[] values) {
+        heapSort(Arrays.asList(keys), Arrays.asList(values));
+    }
+
+    private Algo() { throw new AssertionError(); }
+}
+
+final class UnitTest {
+    public static void main(final String[] args) {
+        test(10, 3, -1, 9, 56, 4, 22, 11, 10, 10, 14, -15, -2, -1, -8, 34, 33, 35, -16);
+        test("foo", "bar", "baz", "quux", "Washington", "foobar", "Michigan");
+    }
+
+    @SafeVarargs
+    private static <T extends Comparable<? super T>> void test(final T... a) {
+        final int w = maxWidth(a);
+        final Integer[] b = iota(a);
+
+        final Runnable print = () -> {
+            System.out.println();
+            for (int i = 0; i != a.length; ++i)
+                System.out.format("%" + w + "s %4d%n", a[i], b[i]);
+        };
+
+        Algo.heapSort(Arrays.asList(a), Arrays.asList(b));
+        print.run();
+
+        Algo.heapSort(Arrays.asList(b), Arrays.asList(a));
+        print.run();
+
+        Algo.heapSort(Arrays.asList(a), Arrays.asList(b),
+                      Comparator.reverseOrder());
+        print.run();
+
+        Algo.heapSort(Arrays.asList(b), Arrays.asList(a),
+                      Comparator.reverseOrder());
+        print.run();
+    }
+
+    private static <T> int maxWidth(final T[] a) {
+        int w = 0;
+        for (final T e : a) w = Math.max(w, e.toString().length());
+        return w;
+    }
+
+    private static <T> Integer[] iota(final T[] a) {
+        final Integer[] b = new Integer[a.length];
+        for (int i = 0; i != b.length; ++i) b[i] = i;
+        return b;
+    }
+
+    private UnitTest() { throw new AssertionError(); }
+}

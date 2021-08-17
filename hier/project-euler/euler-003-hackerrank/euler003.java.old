@@ -1,0 +1,64 @@
+import java.util.Scanner;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+
+final class Arith {
+    static int sqrt32(final int n)
+    {
+        return (int)Math.round(Math.floor(Math.sqrt(n)));
+    }
+    
+    static long sqrt64(final long n)
+    {
+        return Math.round(Math.floor(Math.sqrt(n)));
+    }
+    
+    static int sqrt64to32(final long n)
+    {
+        return (int)sqrt64(n);
+    }
+    
+    private static IntStream rangeClosed(
+            final int startInclusive, final int endInclusive, final int step)
+    {
+        return IntStream.rangeClosed(0, (endInclusive - startInclusive) / step)
+                        .map(k -> startInclusive + k * step);
+    }
+    
+    private static LongStream sieve(final int n) // streams primes up to n
+    {
+        final boolean[] a = new boolean[n + 1];
+        
+        final int imax = sqrt32(n);
+        for (int i = 3; i <= imax; i += 2) {
+            if (!a[i]) {
+                final int jstep = i * 2;
+                for (int j = i * i; j <= n; j += jstep) a[j] = true;
+            }
+        }
+        
+        return LongStream.concat(LongStream.of(2L),
+                rangeClosed(3, n, 2).filter(k -> !a[k]).asLongStream());
+    }
+    
+    static long[] primes(final int n) // primes up to n, as array
+    {
+        return sieve(n).toArray();
+    }
+    
+    // Computes the largest prime factor of odd n > 1, provided primes contains
+    // at least all the prime numbers <= sqrt(n) and no non-prime numbers.
+    // This is a helper method for maxPrimeDivisor().
+    private static long maxPrimeDivisorOdd(final LongStream primes, long n)
+    {
+        
+    }
+    
+    static long maxPrimeDivisor(final long[] primes, long n)
+    {
+        while ((n & 1L) == 0L) n >>>= 1L; // quickly remove all factors of 2
+        return n == 1L ? 2L : maxPrimeDivisorOdd(LongStream.of(primes), n);
+    }
+    
+    private Arith() { }
+}

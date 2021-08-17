@@ -1,0 +1,3 @@
+The solution to serialize-and-deserialize-binary-tree.cs works for this problem
+too, though arguably it is not ideal, because a more compact solution is
+possible if one can take for granted that the BST property holds.

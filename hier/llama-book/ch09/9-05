@@ -1,0 +1,41 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+use English qw(-no_match_vars);
+
+sub match_perlbang {
+    my $line = shift;
+
+    return $line =~ m{
+            ^\#!\s*(?:/usr/(?:local/)?bin/perl  # direct path to interpreter
+            |/usr/bin/env\s+perl)               # or the env trick
+            (?:\s\N*)?$                         # with or without arguments
+        }x;
+}
+
+sub match_copyright {
+    my $line = shift;
+
+    return $line =~ /\bCopyright\b/i;
+}
+
+local $INPLACE_EDIT = '.bak';
+my $got_perlbang = 0;
+
+while (<>) {
+    if ($INPUT_LINE_NUMBER == 1 && match_perlbang $_) {
+        $got_perlbang = 1;
+    } elsif ($INPUT_LINE_NUMBER == 2 && $got_perlbang && !match_copyright $_) {
+        print "## Copyright (C) 2017 by Eliah Kagan\n";
+    }
+} continue {
+    print;
+
+    if (eof ARGV) {
+        close ARGV;         # so $. / $INPUT_LINE_NUMBER will be correct
+        $got_perlbang = 0;  # so we don't reuse a previous file's hashbang
+    }
+}

@@ -1,0 +1,10 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Module::CoreList;
+
+for my $name (sort keys %Module::CoreList::version{'5.014'}) {
+    print "$name\n";
+}

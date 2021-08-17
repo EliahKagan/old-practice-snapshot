@@ -1,0 +1,37 @@
+class Solution {
+public:
+    static vector<int> findClosestElements(const vector<int>& a, int k, int x);
+
+private:
+    using It = vector<int>::const_iterator;
+
+    static pair<It, It> findClosestElements(It first, It last, int k, int x);
+};
+
+vector<int> Solution::findClosestElements(const vector<int>& a,
+                                          const int k, const int x)
+{
+    const auto range = findClosestElements(cbegin(a), cend(a), k, x);
+    return vector<int>(range.first, range.second);
+}
+
+pair<Solution::It, Solution::It>
+Solution::findClosestElements(const It first, const It last,
+                              int k, const int x)
+{
+    auto left = upper_bound(first, last, x), right = left;
+    const auto focus = static_cast<long long>(x); // to prevent overflow
+
+    for (; k > 0 && left != first && right != last; --k) {
+        if (focus - *prev(left) <= *right - focus) {
+            --left;     // include the element at the left boundary
+        } else {
+            ++right;    // include the element at the right boundary
+        }
+    }
+
+    for (; k > 0 && left != first; --k) --left;
+    for (; k > 0 && right != last; --k) ++right;
+
+    return {left, right};
+}

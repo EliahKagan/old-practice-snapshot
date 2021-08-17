@@ -1,0 +1,161 @@
+#include <cassert>
+#include <cstdlib>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace {
+    using std::size_t;
+
+    // A modified binary minheap, suitable for Prim's algorithm.
+    // Traditionally one adds contains() and decrease() methods. I have done
+    // this but also omitted push(), which Prim's algorithm doesn't need.
+    template<typename Key, typename Value>
+    class PrimHeap {
+    public:
+        struct Entry {
+            Key key;
+            Value value;
+        };
+
+        // Constructs a new heap with sequential keys in [min_key, max_key].
+        // Each key initially maps to the specified value, which defaults to
+        // the maximum value of the type (for "infinity").
+        explicit PrimHeap(Key min_key, Key max_key,
+                          Value value = std::numeric_limits<Value>::max());
+
+        const Entry& top() const { return elems_.at(0u); }
+
+        bool empty() const noexcept { return elems_.empty(); }
+
+        bool size() const noexcept { return elems_.size(); }
+
+        void pop();
+
+        bool contains(const Key key) const noexcept
+        {
+            return table_.count(key) != 0;
+        }
+
+        void decrease(Key key, Value value);
+
+    private:
+        static constexpr auto npos = std::numeric_limits<size_t>::max();
+
+        void sift_up(size_t child);
+
+        void sift_down(size_t parent);
+
+        size_t pick_child(size_t parent) const noexcept;
+
+        void exchange(size_t src, size_t dest);
+
+        void record(const size_t src) { table_[elems_[src].key] = src; }
+
+        bool order_ok(size_t parent, size_t child) const noexcept
+        {
+            return elems_[parent].value <= elems_[child].value;
+        }
+
+        std::unordered_map<Key, size_t> table_;
+        std::vector<Entry> elems_;
+    };
+
+    template<typename Key, typename Value>
+    PrimHeap<Key, Value>::PrimHeap(Key min_key, const Key max_key,
+                                   const Value value)
+        : table_{}, elems_(static_cast<size_t>(max_key - min_key) + 1u)
+    {
+        for (auto& ent : elems_) {
+            ent.key = min_key++;
+            ent.value = value;
+        }
+
+        assert(min_key == max_key + static_cast<Key>(1));
+    }
+
+    template<typename Key, typename Value>
+    void PrimHeap<Key, Value>::pop()
+    {
+        const auto key = top().key;
+
+        if (size() == 1u) {
+            table_.clear();
+            elems_.clear();
+        } else {
+            table_.erase(key);
+            elems_.front() = elems_.back();
+            elems_.pop_back();
+            sift_down(0u);
+        }
+    }
+
+    template<typename Key, typename Value>
+    void PrimHeap<Key, Value>::decrease(const Key key, const Value value)
+    {
+        const auto child = table_.at(key);
+        auto& ent = elems_[child];
+
+        if (value < ent.value) {
+            ent.value = value;
+            sift_up(child);
+        }
+    }
+
+    template<typename Key, typename Value>
+    void PrimHeap<Key, Value>::sift_up(size_t child)
+    {
+        while (child != 0u) {
+            const auto parent = (child - 1u) / 2u;
+            if (order_ok(parent, child)) break;
+
+            exchange(child, parent);
+            child = parent;
+        }
+
+        record(child);
+    }
+
+    template<typename Key, typename Value>
+    void PrimHeap<Key, Value>::sift_down(size_t parent)
+    {
+        for (; ; ) {
+            const auto child = pick_child(parent);
+            if (child == npos || order_ok(parent, child)) break;
+
+            exchange(parent, child);
+            parent = child;
+        }
+
+        record(parent);
+    }
+
+    template<typename Key, typename Value>
+    size_t PrimHeap<Key, Value>::pick_child(const size_t parent) const noexcept
+    {
+        const auto left = parent * 2u + 1u;
+        if (left >= size()) return npos;
+
+        const auto right = left + 1u;
+        return right == size() || order_ok(left, right) ? left : right;
+    }
+
+    template<typename Key, typename Value>
+    inline void PrimHeap<Key, Value>::exchange(const size_t src,
+                                               const size_t dest)
+    {
+        using std::swap;
+        swap(elems_[dest], elems_[src]);
+        record(src);
+    }
+
+    template class PrimHeap<unsigned, int>; // FIXME: remove after debugging
+}
+
+int main()
+{
+    //
+}

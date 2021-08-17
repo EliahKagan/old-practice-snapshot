@@ -1,0 +1,142 @@
+#include <cstddef>
+#include <iostream>
+#include <unordered_map>
+#include <utility>
+
+#define FORCE_FULL_INSTANTIATION true // for debugging
+
+namespace {
+    template<typename TKey>
+    class LRU {
+    public:
+        explicit LRU(const std::size_t capacity) : m_capacity{capacity} { }
+
+        LRU(const LRU&) = delete;
+        LRU& operator=(const LRU&) = delete;
+        LRU(LRU&& other) noexcept(noexcept(swap(other))) { swap(other); }
+        inline LRU& operator=(LRU&& rhs) noexcept(noexcept(swap(rhs)));
+        ~LRU();
+
+        void swap(LRU& other)
+                noexcept(noexcept(m_lookup.swap(other.m_lookup)));
+
+        constexpr std::size_t capacity() const noexcept { return m_capacity; }
+
+        std::size_t size() const noexcept { return m_lookup.size(); }
+
+        bool empty() const noexcept { return m_lookup.empty(); }
+
+        bool add(const TKey& key); // true if added, false if already present
+
+        std::size_t m_capacity;
+
+    private:
+        struct Node;
+
+        void move_to_head(Node* node) noexcept;
+
+        Node* m_head {nullptr};
+        Node* m_tail {nullptr};
+        std::unordered_map<TKey, Node*> m_lookup {};
+    };
+
+    template<typename TKey>
+    struct LRU<TKey>::Node {
+        explicit Node(const TKey& key, Node* const prev = nullptr,
+                                       Node* const next = nullptr) noexcept
+            : key{key}, prev{prev}, next{next} { }
+
+        TKey key;
+        Node* prev;
+        Node* next;
+    };
+    
+    template<typename TKey>
+    inline LRU<TKey>& LRU<TKey>::operator=(LRU<TKey>&& rhs)
+            noexcept(noexcept(swap(rhs)))
+    {
+        swap(rhs);
+        return *this;
+    }
+
+    template<typename TKey>
+    LRU<TKey>::~LRU()
+    {
+        while (m_head != m_tail) {
+            m_head = m_head->next;
+            delete m_head->prev;
+        }
+
+        delete m_head;
+        m_head = m_tail = nullptr;
+    }
+
+    template<typename TKey>
+    void LRU<TKey>::swap(LRU<TKey>& other)
+            noexcept(noexcept(m_lookup.swap(other.m_lookup)))
+    {
+        m_lookup.swap(other.m_lookup); // must come first for exception safety
+        std::swap(m_tail, other.m_tail);
+        std::swap(m_head, other.m_head);
+        std::swap(m_capacity, other.m_capacity);
+    }
+
+    template<typename TKey>
+    bool LRU<TKey>::add(const TKey& key)
+    {
+        const auto p = m_lookup.find(key);
+        if (p != m_lookup.end()) {
+            move_to_head(p->second);
+            return false; // the key was already present (cache hit)
+        }
+
+        if (empty()) m_head = m_tail = new Node{key};
+        else if (size() < capacity()) {
+            m_head->prev = new Node{key, nullptr, m_head};
+            m_head = m_head->prev;
+        } else {
+            m_lookup.erase(m_tail->key);
+            m_tail->key = key;
+            move_to_head(m_tail);
+        }
+
+        m_lookup.emplace(key, m_head);
+        return true; // the key had to be added (cache miss)
+    }
+
+    template<typename TKey>
+    void LRU<TKey>::move_to_head(Node* node) noexcept
+    {
+        if (node->prev == nullptr) return; // already at head
+
+        // remove node from its current position in the list
+        node->prev->next = node->next;
+        (node->next == nullptr ? m_tail : node->next->prev) = node->prev;
+
+        // re-add node at the head of the list
+        node->prev = nullptr;
+        node->next = m_head;
+        m_head->prev = node;
+        m_head = node;
+    }
+
+    template<typename TKey>
+    inline void swap(LRU<TKey>& lhs, LRU<TKey>& rhs)
+            noexcept(noexcept(lhs.swap(rhs)))
+    {
+        lhs.swap(rhs);
+    }
+
+#if FORCE_FULL_INSTANTIATION
+    template class LRU<int>;
+    template void swap<int>(LRU<int>&, LRU<int>&);
+#endif
+}
+
+int main()
+{
+    std::ios_base::sync_with_stdio(false);
+
+    LRU<int> cache {10};
+    std::cout << cache.capacity() << '\n';
+}

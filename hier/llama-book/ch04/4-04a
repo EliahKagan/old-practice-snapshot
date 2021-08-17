@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+
+sub greet {
+    state $prev;
+    
+    my $cur = "@_"; # concatenate all word into a single name
+
+    if (defined $prev) {
+        say "Hi $cur! $prev is also here!";
+    } else {
+        say "Hi $cur! You are the first one here!";
+    }
+
+    $prev = $cur;
+}
+
+greet $_ for qw(Fred Barney Wilma Betty);

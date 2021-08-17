@@ -1,0 +1,95 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+use English qw(-no_match_vars);
+use Readonly;
+
+Readonly my $BACKUP_SUFFIX => '.bak';
+
+sub match_perlbang {
+    my $line = shift;
+
+    return $line =~ m{
+            ^\#!\s*(?:/usr/(?:local/)?bin/perl  # direct path to interpreter
+            |/usr/bin/env\s+perl)               # or the env trick
+            (?:\s\N*)?$                         # with or without arguments
+        }x;
+}
+
+sub match_copyright {
+    my $line = shift;
+
+    return $line =~ /\bCopyright\b/i;
+}
+
+sub check_debug {
+    if (scalar(@ARGV) != 0 && $ARGV[0] eq '--debug') {
+        shift @ARGV;
+        return 1;
+    }
+
+    return 0;
+}
+
+sub read_two_lines {
+    my $path = shift;
+
+    open my $in, '<', $path;
+    my $first = <$in>;
+    my $second = <$in>;
+    close $in;
+
+    return $first, $second;
+}
+
+sub choose_paths {
+    my ($debug, @all_paths) = @_;
+    my @paths;
+
+    for my $path (@all_paths) {
+        if ($path =~ /$BACKUP_SUFFIX\z/) {
+            if ($debug) { print {*STDERR} "SKIPPING          $path\n" }
+            next;
+        }
+
+        my ($first, $second) = read_two_lines $path;
+
+        if (match_perlbang($first) && !match_copyright($second)) {
+            push @paths, $path;
+            if ($debug) { print {*STDERR} "WILL PROCESS      $path\n" }
+        } else {
+            if ($debug) { print {*STDERR} "WILL NOT PROCESS  $path\n" }
+        }
+    }
+
+    return @paths;
+}
+
+local @ARGV = choose_paths(check_debug, @ARGV);
+
+if (scalar(@ARGV) == 0) {
+    warn "$PROGRAM_NAME: warning: nothing to do\n";
+    exit 0;
+}
+
+local $INPLACE_EDIT = $BACKUP_SUFFIX;
+my $got_perlbang = 0;
+
+while (<>) {
+    # check again, to degrade gracefully when a race condition occurs
+    if ($INPUT_LINE_NUMBER == 1 && match_perlbang $_) {
+        $got_perlbang = 1;
+    } elsif ($INPUT_LINE_NUMBER == 2 && $got_perlbang && !match_copyright $_) {
+        print "## Copyright (C) 2017 by Eliah Kagan\n";
+    }
+} continue {
+    print;
+
+    if (eof ARGV) {
+        close ARGV;         # so $. / $INPUT_LINE_NUMBER will be correct
+        $got_perlbang = 0;  # so we don't reuse a previous file's hashbang
+    }
+}

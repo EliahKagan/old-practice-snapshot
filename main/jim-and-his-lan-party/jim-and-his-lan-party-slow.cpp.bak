@@ -1,0 +1,23 @@
+#include <cstddef>
+#include <memory>
+#include <unordered_map>
+#include <vector>
+
+namespace {
+    using GroupCountMap = std::unordered_multimap<unsigned, unsigned>;
+
+    class DisjointSets { // TODO: consider renaming
+    public:
+        explicit DisjointSets(std::size_t size);
+
+    private:
+        std::vector<std::unique_ptr<GroupCountMap>> contribs_;
+
+        std::vector<int> metadata_;
+    };
+
+    DisjointSets::DisjointSets(const std::size_t size)
+            : contribs_(size), metadata_(size)
+    {
+    }
+}

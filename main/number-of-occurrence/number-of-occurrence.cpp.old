@@ -1,0 +1,29 @@
+#ifdef NDEBUG
+#error Runtime assertions are unexpectedly disabled for this build.
+#endif
+
+#include <algorithm>
+#include <cassert>
+#include <iterator>
+#include <iostream>
+#include <vector>
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        std::vector<int> a;
+        decltype(a)::size_type n = 0u;
+        auto x = 0;
+        std::cin >> n >> x;
+        a.reserve(n);
+
+        for (auto i = n; i != 0u; --i) {
+            auto k = 0;
+            std::cin >> k;
+            a.push_back(k);
+        }
+
+
+    }
+}

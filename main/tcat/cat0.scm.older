@@ -1,0 +1,10 @@
+;; cat0.scm - very simple cat-like utility
+
+(use-modules (ice-9 rdelim))
+
+(define (cat)
+  (define (re-cat line)
+    (display line) (cat))
+
+  (let ((line (read-line)))
+    (if (eof-object? line) (quit) (re-cat line))))

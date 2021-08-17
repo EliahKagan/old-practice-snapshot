@@ -1,0 +1,2 @@
+Besides in find-median-in-a-stream.java, another Java solution (which works the
+same way) can be found in find-median-from-data-stream-scratch.java.

@@ -1,0 +1,8 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+while (<>) {
+    printf if /\b\p{Upper}\p{Alpha}*\p{Lower}\p{Alpha}*\b/;
+}

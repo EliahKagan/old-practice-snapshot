@@ -1,0 +1,44 @@
+#include <iostream>
+#include <string>
+
+namespace {
+    bool get_swappable_chars(const std::string& s, char& high, char& low)
+    {
+        const auto size = s.size();
+        if (size < 2u) return false;
+
+        const auto stop = size - 1u;
+        for (std::string::size_type i {0u}; i != stop; ++i) {
+            for (auto j = i; ++j != size; ) {
+                if (s[i] > s[j]) {
+                    high = s[i];
+                    low = s[j];
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    void swap_chars(std::string& s, const char first, const char second)
+    {
+        for (char& c : s) {
+            if (c == first) c = second;
+            else if (c == second) c = first;
+        }
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        std::string s;
+        std::cin >> s;
+
+        char high {}, low {};
+        if (get_swappable_chars(s, high, low)) swap_chars(s, high, low);
+        std::cout << s << '\n';
+    }
+}

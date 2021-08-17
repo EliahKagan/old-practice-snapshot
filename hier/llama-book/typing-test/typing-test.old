@@ -1,0 +1,80 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+
+use Readonly;
+use IO::Prompt::Tiny qw(prompt);
+
+Readonly my $NUMBER_OF_REPS => 10;
+Readonly my $GUESS_RATIO_FAILPOINT => 0.2;
+
+Readonly my $EXIT_STATUS_WIN => 0;
+Readonly my $EXIT_STATUS_LOSE => 1;
+
+Readonly my $AS_PERCENT => 100;  # try hard not to change this one
+
+sub trim {
+    my $str = shift;
+    $str =~ s/^\s+//;
+    $str =~ s/\s+$//;
+    return $str;
+}
+
+sub regular_pluralize {
+    my ($number, $word) = @_;
+    return sprintf '%d %s%s', $number, $word, ($number == 1 ? q{} : q{s});
+}
+
+sub format_duration {
+    my ($start, $end) = @_;
+    return regular_pluralize($end - $start, 'second');
+}
+
+sub load_words {
+    my $path = shift;
+    my @words;
+
+    open my $in, '<', $path;
+    while (<$in>) {
+        if (m{^([[:lower:]]+)   # an all-lowercase word
+                (?:/|$)}ax) {   # possibly followed by Hunspell metadata
+            push @words, $1;
+        }
+    }
+    close $in;
+
+    return @words;
+}
+
+my @words = load_words '/usr/share/hunspell/en_US.dic';
+my $count = scalar @words;
+my $max_errors = int($count * $GUESS_RATIO_FAILPOINT);
+
+my %history;
+my $errors = 0;
+my $start = time;
+
+for my $i (1 .. $NUMBER_OF_REPS) {
+    my $word = $words[int rand $count];
+    if (exists $history{$word}) { redo }
+    $history{$word} = 1;
+
+    if (trim(prompt "Type the word \"$word\":") ne $word) {
+        print "Sorry, that's not right!\n";
+        if (++$errors <= $max_errors) { redo } else { last }
+    }
+}
+
+my $end = time;
+
+if ($errors <= $max_errors) {
+    printf "You've completed the test, with %s, in %s.\n",
+           regular_pluralize($errors, 'error'), format_duration($start, $end);
+    exit $EXIT_STATUS_WIN;
+} else {
+    printf "You misspelled over %.0f%% of the dictionary in %s. Sad!\n",
+           $GUESS_RATIO_FAILPOINT * $AS_PERCENT, format_duration($start, $end);
+    exit $EXIT_STATUS_LOSE;
+}

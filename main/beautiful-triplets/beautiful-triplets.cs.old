@@ -1,0 +1,20 @@
+using System;
+using System.Linq;
+
+internal static class Solution {
+    private static int[] GetRecord()
+            => Array.ConvertAll(Console.ReadLine().Split(' '), int.Parse);
+
+    private static void Main()
+    {
+        var nd = GetRecord();
+        var n = nd[0];
+        var d = nd[1];
+
+        var a = GetRecord();
+        Enumerable.Range(0, Math.Max(n - d * 2, 0))
+                  .Count(i => )
+
+        //foreach (var i in Enumerable.Range(0, Math.Max(n - d * 2, 0)))
+    }
+}

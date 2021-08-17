@@ -1,0 +1,23 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+internal static class Solution {
+    private static IEnumerable<long> ModifiedKaprekarOfWidth(int w,
+                                                             long p, long q)
+    {
+        var wl = w / 2;
+        var wr = w - wl;
+
+    }
+
+    private static IEnumerable<long> ModifiedKaprekar(long p, long q)
+    {
+        
+    }
+
+    private static void Main()
+    {
+        //
+    }
+}

@@ -1,0 +1,42 @@
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <set>
+#include <vector>
+
+namespace {
+    template<typename T>
+    std::set<T> get(int count)
+    {
+        std::set<T> s;
+        while (count-- > 0) {
+            T x {};
+            std::cin >> x;
+            s.insert(x);
+        }
+
+        return s;
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        auto n = 0, m = 0;
+        std::cin >> n >> m;
+        const auto a = get<int>(n), b = get<int>(m);
+        
+        std::vector<int> v;
+        std::set_intersection(a.cbegin(), a.cend(), b.cbegin(), b.cend(),
+                              std::back_inserter(v));
+
+        auto sep = "";
+        for (const auto x : v) {
+            std::cout << sep << x;
+            sep = " ";
+        }
+
+        std::cout << '\n';
+    }
+}

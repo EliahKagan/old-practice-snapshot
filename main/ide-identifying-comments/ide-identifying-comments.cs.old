@@ -1,0 +1,54 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+internal static class Solution {
+    private static string Matching(this string text, string pattern)
+    {
+        return string.Concat(from Match m in Regex.Matches(text, pattern)
+                             select m.Value);
+    }
+
+    // matches comments, and line terminators to the right of C-style comments
+    private static string Pattern
+    {
+        get {
+            // matches a line terminator
+            const string endl = @"((?m)(?<=$)\s\s?(?=^))";
+
+            // matches a C-style (multi-line) comment
+            const string cstyle = @"((?s)/\*([^*]|\*(?!/))*\*/)";
+
+            // matches a line terminator to the right of a C-style comment
+            var cendl = string.Format("(?<={0}.*){1}", cstyle, endl);
+
+            // matches a C++-style (single-line) comment
+            var cppstyle = string.Format("(//.*({0}|$))", endl);
+
+            return string.Format("(?n){0}|{1}|{2}", cppstyle, cstyle, cendl);
+        }
+    }
+
+    private static string ReadToEnd()
+    {
+        using (var sr = new StreamReader(Console.OpenStandardInput()))
+            return sr.ReadToEnd();
+    }
+
+    private static void Main()
+    {
+        //Console.WriteLine(ReadToEnd().Matching(Pattern).Matching("(?m)^.*$"));
+
+        //Console.WriteLine(ReadToEnd().Matching(Pattern));
+
+        foreach (Match m in Regex.Matches(ReadToEnd().Matching(Pattern), "(?m)^.*$")) {
+            if (Console.ForegroundColor == ConsoleColor.Cyan)
+                Console.ForegroundColor = ConsoleColor.Red;
+            else
+                Console.ForegroundColor = ConsoleColor.Cyan;
+
+            Console.Write(m.Value);
+        }
+    }
+}

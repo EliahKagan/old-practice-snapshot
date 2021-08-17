@@ -1,0 +1,17 @@
+# Disjiont set data structure with union by rank and path compression.
+class DisjointSets
+  def initialize(size)
+    @elems = Array.new(size, -1)
+  end
+
+  private def find(i)
+    # Find the ancestor.
+    j = i
+    j = @elems[j] while @elems[j] >= 0
+
+    # Compress the path.
+    @elems[i], i = j, @elems[i] while i != j
+
+    j
+  end
+end

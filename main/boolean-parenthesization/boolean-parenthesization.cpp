@@ -1,0 +1,227 @@
+#include <array>
+#include <cstddef>
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+namespace {
+    template<std::size_t Size, int Mod>
+    class Par {
+    public:
+        Par();
+
+        // (*this)[n] is "P_n", the number of distinct total parenthesizations
+        // of a formula of n terms joined by (n - 1) binary operations.
+        constexpr int operator[](const std::size_t k) const
+        {
+            return m_elems[k];
+        }
+
+    private:
+        std::array<int, Size> m_elems {};
+    };
+
+    template<std::size_t Size, int Mod>
+    Par<Size, Mod>::Par()
+    {
+        m_elems[0u] = m_elems[1u] = m_elems[2u] = 1; // P_n = 1, for n <= 2
+
+        // P_n = sum_{k=1}^{n-1} P_k P_{n-k}, for n > 2
+        for (std::size_t n {3u}; n != Size; ++n) {
+            for (std::size_t k {1u}; k != n; ++k) {
+                m_elems[n] += m_elems[k] * m_elems[n - k];
+                m_elems[n] %= Mod;
+            }
+        }
+    }
+}
+
+namespace {
+    template<std::size_t MaxExprLen, int Mod>
+    class Memo {
+    public:
+        explicit Memo(std::string&& expr);
+
+        std::size_t len() const { return m_len; }
+
+        int operator()(const std::size_t i, const std::size_t j) const
+        {
+            return m_memo[i][j];
+        }
+
+    private:
+        static constexpr int common_residue(const int n, const int m = Mod)
+        {
+            return (m + n % m) % m;
+        }
+
+        static void mod(int& n) { n = common_residue(n); }
+
+        static constexpr std::size_t at_least_half(const std::size_t numerator)
+        {
+            return numerator / 2u + numerator % 2u;
+        }
+
+        static constexpr std::size_t max_terms()
+        {
+            return at_least_half(MaxExprLen);
+        }
+
+        static constexpr bool debug_populate {false};
+
+// Horrible ugly hack for MSVC++, which doesn't allow static constexpr method
+// calls on compile-time values in template arguments (even though C++ does).
+#ifdef _MSC_VER
+#define at_least_half(numerator) ((numerator) / 2u + (numerator) % 2u)
+#define max_terms() (at_least_half(MaxExprLen))
+#endif
+        using MyPar = Par<max_terms() + 1u, Mod>;
+        static MyPar s_par;
+
+        std::array<std::array<int, max_terms()>, max_terms()> m_memo;
+#ifdef _MSC_VER
+#undef at_least_half
+#undef max_terms
+#endif
+        const std::string m_expr;
+        const std::size_t m_len; // number of terms in the full expression
+
+        char term(const std::size_t k) const { return m_expr[k * 2u]; }
+
+        char oper(const std::size_t k) const { return m_expr[k * 2u + 1u]; }
+
+        inline void populate_single_terms(); // base case (1-term subformulas)
+
+        inline void populate(std::size_t i, std::size_t j); // i..j subformula
+
+        inline void debug(std::size_t i, std::size_t j) const;
+
+        inline void populate(std::size_t sublen); // > 0 term subformulas
+
+        void populate_all();
+    };
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+#endif
+    template<std::size_t MaxExprLen, int Mod>
+    typename Memo<MaxExprLen, Mod>::MyPar Memo<MaxExprLen, Mod>::s_par {};
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+    template<std::size_t MaxExprLen, int Mod>
+    Memo<MaxExprLen, Mod>::Memo(std::string&& expr)
+        : m_expr{expr}, m_len{at_least_half(m_expr.size())}
+    {
+        if (m_expr.size() > MaxExprLen)
+            throw std::out_of_range{"formula too big"};
+
+        if (m_expr.size() % 2u == 0u)
+            throw std::invalid_argument{"ill-formed formula (even length)"};
+
+        populate_all();
+    }
+
+    template<std::size_t MaxExprLen, int Mod>
+    inline void Memo<MaxExprLen, Mod>::populate_single_terms()
+    {
+        for (std::size_t i {0u}; i != m_len; ++i) {
+            switch (term(i)) {
+            case 'T':
+                m_memo[i][i] = 1;
+                break;
+
+            case 'F':
+                m_memo[i][i] = 0;
+                break;
+
+            default:
+                throw std::invalid_argument{"bad truth value (need T or F)"};
+            }
+        }
+    }
+
+    template<std::size_t MaxExprLen, int Mod>
+    inline void Memo<MaxExprLen, Mod>::populate(const std::size_t i,
+                                                const std::size_t j)
+    {
+        auto& cur = m_memo[i][j] = 0;
+
+        for (auto k = i; k != j; mod(cur), ++k) {
+            const auto op = oper(k);
+            const auto left_true = m_memo[i][k];
+            const auto right_true = m_memo[k + 1u][j];
+
+            if (op == '&') {    // AND
+                cur += left_true * right_true;
+                continue;
+            }
+
+            const auto left_all = s_par[k + 1u - i], right_all = s_par[j - k];
+            const auto left_false = left_all - left_true;
+            const auto right_false = right_all - right_true;
+
+            switch (op) {
+            case '|':           // OR
+                cur += left_all * right_all - left_false * right_false;
+                break;
+
+            case '^':           // XOR
+                cur += left_true * right_false + right_true * left_false;
+                break;
+
+            default:
+                throw std::invalid_argument{"bad operation (need &, |, or ^)"};
+            }
+        }
+    }
+
+    template<std::size_t MaxExprLen, int Mod>
+    inline void Memo<MaxExprLen, Mod>::debug(const std::size_t i,
+                                             const std::size_t j) const
+    {
+        std::cerr << "DEBUG (" << i << ", " << j << ") "
+                  << std::setw(static_cast<int>(m_expr.size()))
+                  << m_expr.substr(i * 2u, (j - i) * 2u + 1u)
+                  << "  " << m_memo[i][j] << '\n';
+    }
+
+    template<std::size_t MaxExprLen, int Mod>
+    inline void Memo<MaxExprLen, Mod>::populate(const std::size_t sublen)
+    {
+        for (std::size_t i {0u}, j {sublen}; j != m_len; ++i, ++j) {
+            populate(i, j);
+            if (debug_populate) debug(i, j);
+        }
+    }
+
+    template<std::size_t MaxExprLen, int Mod>
+    void Memo<MaxExprLen, Mod>::populate_all()
+    {
+        populate_single_terms();
+
+        for (std::size_t sublen {1u}; sublen <= m_len; ++sublen)
+            populate(sublen);
+    }
+}
+
+int main()
+{
+    using MyMemo = Memo<100u, 1003>;
+
+    std::ios_base::sync_with_stdio(false);
+
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        int n; // not read
+        std::string expr;
+        std::cin >> n >> expr;
+
+        MyMemo memo {std::move(expr)};
+        std::cout << memo(0u, memo.len() - 1u) << '\n';
+    }
+}

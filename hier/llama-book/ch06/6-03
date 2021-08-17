@@ -1,0 +1,16 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my @names = sort keys %ENV;
+
+my $width = 0;
+for my $name (@names) {
+    my $len = length $name;
+    if ($width < $len) { $width = $len }
+}
+
+for my $name (@names) {
+    printf "%*s  %s\n", -$width, $name, $ENV{$name};
+}

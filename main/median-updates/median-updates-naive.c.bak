@@ -1,0 +1,286 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <assert.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifndef _WIN32
+#include <alloca.h>
+#elif defined(_MSC_VER)
+#include <malloc.h>
+#define restrict __restrict
+#endif
+
+#ifdef __GNUC__
+#define ATTRIBUTE(a) __attribute__(a)
+#else
+#define ATTRIBUTE(a)
+#endif
+
+#define LOW INT32_MIN
+#define SCN_ELEM SCNd32
+#define PRI_ELEM PRId32
+#define PRI_BIGGER PRIdFAST64
+
+typedef int32_t Element;
+typedef int_fast64_t Bigger; // big enough to add or subtract any two Elements
+
+enum { k_nice_debugging = 1 };
+enum { k_nmax = 100000 };
+enum { k_no_value = 0 }; // "doesn't mean to hold a value yet"
+
+// MEMORY ALLOCATORS:
+
+ATTRIBUTE (( malloc, returns_nonnull, warn_unused_result ))
+static void *xcalloc(const size_t num, const size_t size)
+{
+    void *const p = calloc(num, size);
+    if (p == NULL) abort();
+    return p;
+}
+
+ATTRIBUTE (( malloc, returns_nonnull, warn_unused_result))
+static void *xmalloc(const size_t size)
+{
+    void *const p = malloc(size);
+    if (p == NULL) abort();
+    return p;
+}
+
+ATTRIBUTE (( returns_nonnull, warn_unused_result))
+static void *xrealloc(void *const p, const size_t size)
+{
+    void *const q = realloc(p, size);
+    if (q == NULL) abort();
+    return q;
+}
+
+// VEC DATA STRUCTURE:
+
+enum { k_vec_initial_capacity = 1 };
+static_assert(k_vec_initial_capacity > 0, "initial capacity must be positive");
+
+struct vec {
+    int length, capacity;
+    Element *elems;
+};
+
+ATTRIBUTE (( nonnull ))
+static void vec_append(struct vec *const vp, const Element e)
+{
+    assert(0 <= vp->length && vp->length <= vp->capacity);
+
+    if (vp->length == vp->capacity) {
+        if (vp->capacity == 0) {
+            assert(vp->elems == NULL);
+            vp->capacity = k_vec_initial_capacity;
+            vp->elems = xmalloc(k_vec_initial_capacity * sizeof *vp->elems);
+        } else {
+            assert(vp->elems != NULL);
+            vp->capacity *= 2;
+            vp->elems = xrealloc(vp->elems,
+                                 (size_t)vp->capacity * sizeof *vp->elems);
+        }
+    }
+
+    vp->elems[vp->length++] = e;
+}
+
+#ifdef NDEBUG
+ATTRIBUTE (( pure ))
+#endif
+ATTRIBUTE (( nonnull, warn_unused_result ))
+static int vec_index_of(const struct vec *const vp, const Element e)
+{
+    assert(0 <= vp->length && vp->length <= vp->capacity);
+    assert((vp->capacity == 0) == (vp->elems == NULL));
+
+    for (int i = 0; i != vp->length; ++i)
+        if (vp->elems[i] == e) return i;
+
+    return -1;
+}
+
+ATTRIBUTE (( nonnull ))
+static void vec_erase_at(struct vec *const vp, int i)
+{
+    assert(0 <= i && i < vp->length && vp->length <= vp->capacity);
+    assert(vp->elems != NULL);
+
+    for (--vp->length; i != vp->length; ++i) vp->elems[i] = vp->elems[i + 1];
+}
+
+// AD-HOC SET DATA STRUCTURE (the caller must manually do some operations):
+
+#ifdef NDEBUG
+ATTRIBUTE (( const ))
+#endif
+ATTRIBUTE (( warn_unused_result ))
+static inline int set_guess_best_bucket_count(const int n)
+{
+    assert(n > 0);
+    return (int)lroundf((float)n / logf(2.0f));
+}
+
+ATTRIBUTE (( malloc, returns_nonnull, warn_unused_result ))
+static inline struct vec *set_create(const int slen) // pass bucket count
+{
+    return xcalloc((size_t)slen, sizeof *set_create(slen));
+}
+
+ATTRIBUTE (( nonnull ))
+static void set_destroy(const int slen, struct vec *restrict *const sp)
+{
+    for (int i = 0; i != slen; ++i) {
+        if ((*sp)[i].capacity != 0) { // no need to check, but it may be sparse
+            assert((*sp)[i].elems != NULL);
+
+            assert(0 <= (*sp)[i].length
+                   && (*sp)[i].length <= (*sp)[i].capacity);
+
+            free((*sp)[i].elems);
+            (*sp)[i].elems = NULL;
+            (*sp)[i].capacity = (*sp)[i].length = 0;
+        }
+    }
+
+    free(*sp);
+    *sp = NULL;
+}
+
+#ifdef NDEBUG
+ATTRIBUTE (( const ))
+#endif
+ATTRIBUTE (( nonnull, warn_unused_result ))
+static inline struct vec *set_get_bucket(const int slen, struct vec *const s,
+                                         const Element e)
+{
+    // Use http://mathworld.wolfram.com/CommonResidue.html to index the bin.
+    const int i = (slen + e % slen) % slen;
+    assert(0 <= i && i < slen);
+    return s + i;
+}
+
+ATTRIBUTE (( nonnull ))
+static inline void set_insert(const int slen, struct vec *const s,
+                              const Element e)
+{
+    struct vec *const bp = set_get_bucket(slen, s, e);
+    if (vec_index_of(bp, e) == -1) vec_append(bp, e);
+}
+
+// COMPUTING RUNNING MEDIANS WITH BOTH INSERTIONS AND REMOVALS:
+
+ATTRIBUTE (( nonnull ))
+static inline void print_median(const Element *restrict const a,
+                                const int i) // i indexes the last element in a
+{
+    assert(0 < i);
+    const int idx_quot = i / 2, idx_rem = i % 2;
+
+    if (idx_rem != 0) {
+        printf("%" PRI_ELEM "\n", a[idx_quot + 1]);
+        return;
+    }
+
+    const Bigger m = (Bigger)a[idx_quot] + (Bigger)a[idx_quot + 1];
+
+    if (m == -1) {
+        puts("-0.5");
+        return;
+    }
+
+    const Bigger val_quot = m / 2, val_rem = m % 2;
+
+#ifdef __MINGW32__
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wformat-non-iso"
+#else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+#endif // ! __MINGW32__
+#endif
+    if (val_rem == 0)   printf("%" PRI_BIGGER "\n", val_quot);
+    else                printf("%" PRI_BIGGER ".5\n", val_quot);
+#ifdef __MINGW32__
+#ifdef __clang__
+#pragma clang diagnostic pop
+#else
+#pragma GCC diagnostic pop
+#endif
+#endif // ! __MINGW32__
+}
+
+ATTRIBUTE (( nonnull ))
+static inline void run(int n, Element *restrict const a,
+                       const int slen, struct vec *restrict const s)
+{
+    char q = k_no_value;
+    Element e = k_no_value;
+    for (int i = 0; n-- != 0; ) { // i indexes that last element in a
+        (void)scanf(" %c %" SCN_ELEM, &q, &e);
+
+        if (q == 'a') {
+            // This query performs INSERTION, so insert an e into a.
+            int j = i, k = ++i; // shift items from j to k (k == j + 1, always)
+            while (e < a[j]) a[k--] = a[j--];
+            a[k] = e; // insert at k, then we can check for a duplicate at j
+
+            // If a might not have had e before this, add e to s.
+            if (a[j] != e || e == LOW) set_insert(slen, s, e);
+        } else {
+            // This query performs REMOVAL, so check s to see if a has an e.
+            struct vec *const bp = set_get_bucket(slen, s, e);
+            const int bi = vec_index_of(bp, e);
+            if (bi == -1) {
+no_update:
+                puts("Wrong!");
+                continue;
+            }
+
+            // Since s contains e, a has at least one e, so remove an e from a.
+            int j = i + 1; // j will index just before the removed element in a
+            for (Element t0 = a[i], t1 = k_no_value; t0 != e; ) {
+                t1 = a[j];
+                a[j--] = t0;
+                if (t1 == e) break;
+                t0 = a[j];
+                a[j--] = t1;
+            }
+
+            // If we removed the only occurrence of e in a, remove e from s.
+            if (a[j] != e || j == 0) vec_erase_at(bp, bi);
+
+            // Update the size of a, and emit the appropriate type of output.
+            if (--i == 0) goto no_update;
+        }
+
+        print_median(a, i);
+    }
+}
+
+int main(void)
+{
+    int n;
+    (void)scanf("%d", &n);
+    if (n <= 0 || n > k_nmax) abort();
+
+    const int slen = set_guess_best_bucket_count(n);
+    struct vec *restrict s = set_create(slen);
+
+    Element *restrict const a = alloca((size_t)(n + 1) * sizeof a[0]);
+    a[0] = LOW; // sentinel element
+    if (k_nice_debugging != (0)) memset(a + 1, 0xCC, (size_t)n * sizeof a[1]);
+
+    run(n, a, slen, s);
+
+    if (k_nice_debugging != (0)) set_destroy(slen, &s);
+}

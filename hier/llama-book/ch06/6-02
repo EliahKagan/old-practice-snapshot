@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+my %freqs;
+
+while (<>) {
+    chomp;
+    ++$freqs{$_};
+}
+
+for my $word (sort keys %freqs) {
+    print "$word ($freqs{$word})\n";
+}

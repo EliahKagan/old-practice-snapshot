@@ -1,0 +1,59 @@
+#include <unordered_map>
+
+using namespace std;
+
+namespace {
+    class Node {
+    public:
+        // Constructs a sentinel node.
+        Node() : prev_{this}, next_{this}, key_{}, value_{} { }
+
+        Node(const Node&) = delete;
+        Node(Node&&) = delete;
+        Node& operator=(const Node&) = delete;
+        Node& operator=(Node&&) = delete;
+        ~Node();
+
+        // Disconnects this node from its list.
+        void detach();
+
+    private:
+        // Constructs what will be a data node.
+        Node(const int key, const int value) : key_{key}, value_{value} { }
+
+        // Connects an unattached node to the right of this one.
+        void attach_right(Node* other);
+
+        Node* prev_, * next_;
+        int key_, value_;
+    };
+
+    inline void Node::detach()
+    {
+        prev_->next_ = next_;
+        next_->prev_ = prev_;
+
+        prev_ = next_ = this;
+    }
+}
+
+class LRUCache {
+public:
+    LRUCache(const int capacity) : capacity_{capacity} { }
+    LRUCache(const LRUCache&) = delete;
+    LRUCache(LRUCache&&) = delete;
+    LRUCache& operator=(const LRUCache&) = delete;
+    LRUCache& operator=(LRUCache&&) = delete;
+    ~LRUCache() { delete list_; }
+
+    int get(int key);
+
+    void put(int key, int value);
+
+private:
+    Node* list_ = new Node{};
+    unordered_map<int, Node*> map_ {};
+    const int capacity_;
+    int size {0};
+};
+

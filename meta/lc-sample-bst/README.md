@@ -1,0 +1,1 @@
+This is a sample specification of a binary search tree, in the serialized form LeetCode expects it. It's handy as a test input for various LeetCode problems on BSTs, since it is more complicated than many of the default example inputs.

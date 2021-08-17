@@ -1,0 +1,41 @@
+using System;
+using System.Linq;
+using System.Text.RegularExpressions;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.0.1")]
+
+internal static class Solution {
+    private static int[] ReadMaxRuns()
+    {
+        const int bias = 'a' - 1;
+        var r = new Regex(@"(.)\1*", RegexOptions.Compiled);
+        var a = new int['z' - bias + 1]; // 27
+
+        var s = Console.ReadLine().Trim();
+        foreach (var t in r.Matches(s).Cast<Match>().Select(m => m.Value)) {
+            var len = t.Length;
+            var i = t[0] - bias;
+            if (a[i] < len) a[i] = len;
+        }
+
+        return a;
+    }
+
+    private static bool Query(this int[] a, int x)
+    {
+        for (var i = 1; i != a.Length; ++i)
+            if (x % i == 0 && x / i <= a[i]) return true;
+
+        return false;
+    }
+
+    private static int ReadValue() => int.Parse(Console.ReadLine());
+
+    private static void Main()
+    {
+        var a = ReadMaxRuns();
+
+        for (var n = ReadValue(); n > 0; --n)
+            Console.WriteLine(a.Query(ReadValue()) ? "Yes" : "No");
+    }
+}

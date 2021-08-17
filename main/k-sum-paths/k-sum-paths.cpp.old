@@ -1,0 +1,17 @@
+/*Complete the function below
+Node is as follows:
+struct Node{
+	int data;
+	Node *left,*right;
+	Node(int d){
+		data=d;
+		left=right=NULL;
+	}
+};*/
+int printCount(Node *root,int k)
+{
+    if (root == nullptr) return 0;
+    
+    const auto cur = ((k -= root->data) == 0 ? 1 : 0);
+    return cur + printCount(root->left, k) + printCount(root->right, k);
+}

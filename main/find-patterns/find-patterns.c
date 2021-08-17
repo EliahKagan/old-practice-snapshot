@@ -1,0 +1,62 @@
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define XSTR(a) STR(a)
+#define STR(a) #a
+
+#define MAXLEN 1000
+#define MAXLEN_FMT "%" XSTR(MAXLEN) "s"
+
+#define ERASED ' ' // any whitespace character would work for this
+
+enum { no_match = -1 };
+
+static ptrdiff_t erase_match(char *const text, const char *pattern)
+{
+    assert(*pattern != '\0');
+
+    ptrdiff_t pos = 0;
+
+    for (; text[pos] != *pattern; ++pos)
+        if (text[pos] == '\0') return no_match;
+
+    const ptrdiff_t start = pos;
+    
+    for (text[start] = ERASED; *++pattern != '\0'; text[pos] = ERASED) {
+        while (text[++pos] != *pattern)
+            if (text[pos] == '\0') return no_match;
+    }
+
+    return start;
+}
+
+static int count_and_erase_matches(char *const text,
+                                    const char *const pattern)
+{
+    int count = 0;
+
+    for (ptrdiff_t i = 0; (i = erase_match(text + i, pattern)) != no_match;
+                          ++i)
+        ++count;
+
+    return count;
+}
+
+int main()
+{
+    enum { bufsiz = MAXLEN + 1 };
+    char text[bufsiz] = { 0 }, pattern[bufsiz] = { 0 };
+
+    int t = 0;
+    for ((void)scanf("%d", &t); t > 0; --t) {
+        if (scanf(MAXLEN_FMT MAXLEN_FMT, text, pattern) != 2) abort();
+        printf("%d\n", count_and_erase_matches(text, pattern));
+    }
+}

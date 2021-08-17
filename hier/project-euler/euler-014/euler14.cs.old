@@ -1,0 +1,60 @@
+// euler14.cs - Project Euler problem 14: Longest Collatz sequence
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.Linq;
+
+[assembly:System.Reflection.AssemblyVersion("0.1.0.0")]
+
+[Serializable]
+internal sealed class UnreachableException : NotSupportedException { }
+
+internal static class Program {
+    private static IEnumerable<int> Collatz(int k)
+    {
+        Contract.Assert(k > 0);
+
+        for (; ; ) {
+            yield return k;
+            if (k == 1) yield break;
+            k = (k % 2 == 0 ? k / 2 : k * 3 + 1);
+        }
+    }
+
+    private static int? Parse(string[] args)
+    {
+        Contract.Assert(args != null);
+
+        if (!args.Any()) return null;
+
+        try {
+            if (args.Length == 1) {
+                var n = int.Parse(args[0]);
+                if (n > 0) return n;
+            }
+        }
+        catch (FormatException) { }
+        catch (OverflowException) { }
+
+        Console.Error.WriteLine("Usage:  {0} [stop-index]",
+                                Environment.GetCommandLineArgs()[0]);
+        Environment.Exit(1);
+
+        throw new UnreachableException();
+    }
+
+    private static void Main()
+    {
+        Enumerable.Range(1, 1000000).
+
+        var n = Enumerable.Range(1, 1000000)
+                          .OrderByDescending(k => Collatz(k).Count())
+                          .First();
+
+        //var n = Enumerable.Range(1, 13).Max(k => Collatz(k).Count());
+
+        Console.WriteLine("The Collatz chain from {0} has length {1}.",
+                          n, Collatz(n).Count());
+    }
+}

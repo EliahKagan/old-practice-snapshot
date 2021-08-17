@@ -1,0 +1,56 @@
+#define DEBUG
+
+using System;
+using System.Diagnostics.Contracts;
+
+[assembly: System.Reflection.AssemblyVersion("1.0.1.0")]
+
+internal static class Solution {
+    private static int[] GetRecord(int count)
+    {
+        var a = Array.ConvertAll(Console.ReadLine().Trim().Split(), int.Parse);
+        Contract.Assert(a.Length == count);
+        return a;
+    }
+
+    private static void GetNK(out int n, out int k)
+    {
+        var nk = GetRecord(2);
+        n = nk[0];
+        k = nk[1];
+        Contract.Assert(n > 0 && k > 0);
+    }
+
+    private static Action<int, int> CreateTrackingSwapAction(int[] values,
+                                                             Action<int> track)
+    {
+        return (i, j) => {
+            var tmp = values[i];
+            values[i] = values[j];
+            values[j] = tmp;
+
+            track(i);
+            track(j);
+        };
+    }
+
+    private static void Main()
+    {
+        int n, k;
+        GetNK(out n, out k);
+        var values = GetRecord(n); // _not_ checking that it is a permutation
+        var lookup = new int[n + 1];
+
+        Action<int> track = i => lookup[values[i]] = i;
+        for (var i = 0; i != n; ++i) track(i);
+
+        Action<int, int> swap = CreateTrackingSwapAction(values, track);
+        for (var i = 0; k != 0 && n != 0; ++i, --n) {
+            if (values[i] == n) continue;
+            swap(i, lookup[n]);
+            --k;
+        }
+
+        Console.WriteLine(string.Join(" ", values));
+    }
+}

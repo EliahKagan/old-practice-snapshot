@@ -1,0 +1,62 @@
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <unordered_map>
+#include <utility>
+
+namespace {
+    constexpr auto debug_check_for_overflow = true;
+
+    std::unordered_map<int, int> create_steps_to_zero_memo()
+    {
+        std::unordered_map<int, int> memo;
+        
+        memo.emplace(0, 0);
+        memo.emplace(1, 1);
+
+        return memo;
+    }
+
+    int count_steps_to_zero(const int n, std::unordered_map<int, int>& memo)
+    {
+        const auto p = memo.find(n);
+        if (p != memo.end()) return p->second;
+
+        auto acc = std::numeric_limits<int>::max();
+        for (auto k = static_cast<int>(std::sqrt(n)); k != 1; --k) {
+            if (n % k == 0)
+                acc = std::min(acc, count_steps_to_zero(n / k, memo));
+        }
+
+        const auto ret = std::min(acc, count_steps_to_zero(n - 1, memo)) + 1;
+        memo.emplace(n, ret);
+        return ret;
+    }
+}
+
+int main()
+{
+    std::ios_base::sync_with_stdio(false);
+
+    if (debug_check_for_overflow) {
+        constexpr auto nmax = 1000000;
+
+        std::vector<int> a;
+        a.reserve(nmax + 1);
+
+        for (auto i = 0; i <= nmax; ++i) {
+            auto m = create_steps_to_zero_memo();
+            a.push_back(count_steps_to_zero(i, m));
+        }
+    }
+
+    auto memo = create_steps_to_zero_memo();
+
+    auto q = 0;
+    for (std::cin >> q; q > 0; --q) {
+        auto n = 0;
+        std::cin >> n;
+        std::cout << count_steps_to_zero(n, memo) << '\n';
+    }
+}

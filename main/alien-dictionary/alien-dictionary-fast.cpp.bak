@@ -1,0 +1,154 @@
+//Initial Template for C++
+/* script for test case http://code.geeksforgeeks.org/PetjYq */
+#include "alien-dictionary-fast.h" //#include<bits/stdc++.h>
+using namespace std;
+string printOrder(string[], int, int);
+string order;
+bool f(string a, string b)
+{
+    int p1 = 0; int p2 = 0;
+    for (int i = 0; i<min(a.size(), b.size()) and p1 == p2; i++)
+    {
+        p1 = order.find(a[i]);
+        p2 = order.find(b[i]);
+        //	cout<<p1<<" "<<p2<<endl;
+    }
+
+    if (p1 == p2 and a.size() != b.size())
+        return a.size() < b.size();
+
+    return p1 < p2;
+}
+
+// Driver program to test above functions
+int main()
+{
+    int t;
+    cin >> t;
+    while (t--)
+    {
+        int n, k;
+        cin >> n >> k;
+        vector<string> s (n);
+        for (int i = 0; i < n; i++) cin >> s[i];
+
+        string ss = printOrder(s.data(), n, k);
+        order = "";
+        for (int i = 0; i < ss.size(); i++)
+            order += ss[i];
+
+        vector<string> temp (s);
+        sort(temp.data(), temp.data() + n, f);
+
+        bool f = true;
+        for (int i = 0; i < n; i++)
+            if (s[i] != temp[i]) f = false;
+
+        cout << f;
+        cout << endl;
+
+    }
+    return 0;
+}
+
+namespace {
+    class GraphMakerTrie {
+    public:
+        explicit GraphMakerTrie(size_t order);
+
+        GraphMakerTrie(const GraphMakerTrie&) = delete;
+        GraphMakerTrie(GraphMakerTrie&&) = delete;
+        GraphMakerTrie& operator=(const GraphMakerTrie&) = delete;
+        GraphMakerTrie& operator=(GraphMakerTrie&&) = delete;
+        ~GraphMakerTrie() = default;
+
+        // Registers [first,last) as a new lexicographically greatest chain.
+        void insert(std::string::const_iterator first,
+                    std::string::const_iterator last);
+        
+        // Registers word as a new lexicographically greatest chain.
+        void insert(const std::string& word);
+
+    private:
+        struct Node {
+            explicit Node(const size_t order) : children(order) { }
+            vector<Node*> children;
+        };
+
+        // Translates a character into its corresponding vertex number (index).
+        static constexpr size_t vertex(const char ch) noexcept;
+
+        size_t order() const noexcept { return adj_.size(); }
+
+        Node* make_node();
+
+        void place_edges(const Node& source_parent, size_t dest);
+
+        deque<Node> nodes_;
+        vector<vector<size_t>> adj_;
+    };
+
+    GraphMakerTrie::GraphMakerTrie(const size_t order) : nodes_{}, adj_(order)
+    {
+        make_node();
+    }
+
+    void GraphMakerTrie::insert(std::string::const_iterator first,
+                                const std::string::const_iterator last)
+    {
+        auto parent = &nodes_.front();
+
+        for (auto subchain = true; subchain && first != last; ++first) {
+            const auto dest = vertex(*first);
+            auto& child = parent->children.at(dest);
+
+            if (!child) {
+                subchain = false;
+                place_edges(*parent, dest);
+                child = make_node();
+            }
+
+            parent = child;
+        }
+
+        for (; first != last; ++first)
+            parent = parent->children.at(vertex(*first)) = make_node();
+    }
+
+    inline void GraphMakerTrie::insert(const std::string& word)
+    {
+        insert(word.cbegin(), word.cend());
+    }
+
+    constexpr size_t GraphMakerTrie::vertex(const char ch) noexcept
+    {
+        return static_cast<size_t>(ch - 'a');
+    }
+
+    inline GraphMakerTrie::Node* GraphMakerTrie::make_node()
+    {
+        nodes_.emplace_back(order());
+        return &nodes_.back();
+    }
+
+    void GraphMakerTrie::place_edges(const GraphMakerTrie::Node& source_parent,
+                                     const size_t dest)
+    {
+        const auto& children = source_parent.children;
+        assert(!children[dest]);
+
+        const auto ord = order();
+        assert(ord == children.size());
+
+        for (size_t src {0u}; src != ord; ++src)
+            if (children[src]) adj_[src].push_back(dest);
+    }
+}
+
+//User function Template for C++
+/*The function should return a string denoting the 
+order of the words in the Alien Dictionary */
+string printOrder(string dict[], int N, int k)
+{
+    
+}

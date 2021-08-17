@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+class Node(object):
+    '''A sentinel node or data node of a circular doubly-linked list (CDLL).'''
+    def __init__(self, sentinel=None, key=None):
+        '''Constructs a node and place it in a new or existing CDLL.'''
+        if sentinel is None: # This is a new CDLL's sentinel node.
+            assert key is None
+            self.key = None
+            self.behind = self.ahead = self
+        else: # This is a new data node at the front of an existing CDLL.
+            assert key is not None
+            self.key = key
+            sentinel._splice_detached_ahead(self)
+
+    def splice_ahead(self, other):
+        '''Inserts other ahead of self, after relinking other's neighbors.'''
+        other.behind.ahead = other.ahead
+        other.ahead.behind = other.behind
+        self._splice_detached_ahead(other)
+
+    def _splice_detached_ahead(self, other):
+        '''Inserts other ahead of self. Assumes other is not already linked.'''
+        other.behind = self
+        other.ahead = self.ahead
+        self.ahead.behind = other
+        self.ahead = other
+
+class LRUCache(object):
+    '''A least-recently-used cache.'''
+    def __init__(self, capacity):
+        '''Initialized the cache.'''
+        if capacity <= 0:
+            raise ValueError('capacity must be positive')
+
+        self._capacity = capacity
+        self._length = 0
+        self._queue = Node()
+        self._table = {}
+
+    def bump(self, key):
+        '''Moves key to front, inserting it if not already present. Returns the
+        number of "faults," which 0 if the key was present or 1 otherwise.'''
+        try:
+            node = self._table[key]

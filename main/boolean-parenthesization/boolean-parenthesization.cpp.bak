@@ -1,0 +1,49 @@
+#include <array>
+#include <cstddef>
+#include <iostream>
+
+namespace {
+    constexpr std::size_t at_least_half(const std::size_t numerator)
+    {
+        return numerator / 2u + numerator % 2u;
+    }
+
+    constexpr std::size_t max_expr_len {100u};
+    constexpr std::size_t max_terms {at_least_half(max_expr_len)};
+    
+    class Memo {
+    public:
+
+    private:
+        static constexpr int s_mod {1003};
+
+        // s_par[n] is the number of distinct parenthesizations of a formula of
+        // n terms joined by (n - 1) binary operations.
+        using DistinctParenthesizations = std::array<int, max_terms + 1u>;
+        static DistinctParenthesizations s_par;
+        static std::nullptr_t s_par_init;
+
+
+    };
+
+    Memo::DistinctParenthesizations Memo::s_par {};
+
+    std::nullptr_t Memo::s_par_init {[] {
+        s_par[0] = s_par[1] = s_par[2] = 1; // P_n = 1, for n <= 2
+
+        // P_n = sum_{k=1}^{n-1} P_k P_{n-1-k}, for n > 2
+        for (std::size_t n {3u}; n != s_par.size(); ++n) {
+            for (std::size_t k{1u}; k != n; ++k) {
+                s_par[n] += s_par[k] * s_par[n - 1u - k];
+                s_par[n] %= s_mod;
+            }
+        }
+
+        return nullptr;
+    }()};
+}
+
+int main()
+{
+    //
+}

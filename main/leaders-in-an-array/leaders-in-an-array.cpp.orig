@@ -1,0 +1,65 @@
+#ifdef _MSC_VER
+#define NOMINMAX
+#endif
+
+#ifdef NDEBUG
+#error Runtime assertions are unexpectedly disabled for this build.
+#endif
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <vector>
+
+namespace {
+    constexpr auto dropped = -1;
+
+    std::vector<int> read_elements()
+    {
+        std::vector<int> a;
+        decltype(a)::size_type n = 0u;
+        std::cin >> n;
+        assert(1u <= n && n <= 100u);
+        a.reserve(n);
+
+        for (auto i = n; i != 0u; --i) {
+            auto k = 0;
+            std::cin >> k;
+            assert(0 <= k && k <= 100);
+            a.push_back(k);
+        }
+
+        return a;
+    }
+
+    void drop_non_leaders(std::vector<int>& a)
+    {
+        auto max = 0;
+        std::for_each(a.rbegin(), a.rend(), [&max](int& k) {
+            if (k < max) k = dropped;
+            else max = k;
+        });
+    }
+
+    void print_elements(const std::vector<int>& a)
+    {
+        auto sep = "";
+        for (const auto k : a) {
+            if (k == dropped) continue;
+            std::cout << sep << k;
+            sep = " ";
+        }
+
+        std::cout << '\n';
+    }
+}
+
+int main()
+{
+    auto t = 0;
+    for (std::cin >> t; t > 0; --t) {
+        auto a = read_elements();
+        drop_non_leaders(a);
+        print_elements(a);
+    }
+}

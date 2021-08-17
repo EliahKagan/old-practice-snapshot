@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.010;
+
+for my $arg (@ARGV) {
+    $arg =~ /\A ([^=]*) (?: = (.*))? \z/msx or die q{regex should've matched!};
+    $ENV{$1} = $2;
+}
+
+my @names = sort keys %ENV;
+
+my $width = 0;
+for my $name (@names) {
+    my $len = length $name;
+    if ($width < $len) { $width = $len }
+}
+
+for my $name (@names) {
+    printf "%*s  %s\n", -$width, $name, $ENV{$name} // '(undefined value)';
+}

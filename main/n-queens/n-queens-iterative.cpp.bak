@@ -1,0 +1,54 @@
+class Solution {
+public:
+    static vector<vector<string>> solveNQueens(int n);
+};
+
+namespace {
+    inline bool safe(const vector<int>& qjs)
+    {
+        const auto i = static_cast<int>(qjs.size() - 1);
+        const auto j = qjs.back();
+        
+        for (auto qi = 0; qi != i; ++qi) {
+            const auto dj = j - qjs[qi];
+            if (dj == 0 || i - qi == abs(dj)) return false;
+        }
+        
+        return true;
+    }
+    
+    vector<string> draw(const vector<int>& qjs)
+    {
+        const auto n = qjs.size();
+        
+        vector<string> board (n, string(n, '.'));
+        for (auto i = 0; i != n; ++i) board[i][qjs[i]] = 'Q';
+        return board;
+    }
+}
+
+vector<vector<string>> Solution::solveNQueens(const int n)
+{
+    assert(n > 0);
+    
+    vector<vector<string>> boards;
+    boards.reserve(n);
+    
+    vector<int> qjs;
+    qjs.reserve(n);
+    qjs.push_back(-1);
+    
+    while (!qjs.empty()) {
+        if (++qjs.back() == n) {
+            qjs.pop_back();
+        }
+        else if (safe(qjs)) {
+            if (qjs.size() == n)
+                boards.push_back(draw(qjs));
+            else
+                qjs.push_back(-1);
+        }
+    }
+    
+    return boards;
+}

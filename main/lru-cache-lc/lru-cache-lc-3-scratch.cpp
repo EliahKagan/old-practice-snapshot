@@ -1,0 +1,133 @@
+#include <cassert>
+#include <iostream>
+#include <iterator>
+#include <list>
+#include <unordered_map>
+
+class LRUCache {
+public:
+    explicit LRUCache(int capacity);
+
+    LRUCache(const LRUCache&) = delete;
+    LRUCache(LRUCache&&) = default;
+    LRUCache& operator=(const LRUCache&) = delete;
+    LRUCache& operator=(LRUCache&&) = default;
+    ~LRUCache() = default;
+
+    int get(int key);
+
+    void put(int key, int value);
+
+private:
+    struct Entry {
+        constexpr Entry(int key, int value) noexcept; // faciliates emplacement
+
+        int key, value;
+    };
+
+    static constexpr auto not_found = -1;
+
+    void bump(std::list<Entry>::iterator node);
+
+    std::unordered_map<int, std::list<Entry>::iterator> map_;
+
+    std::list<Entry> chain_;
+
+    decltype(chain_)::size_type capacity_;
+};
+
+LRUCache::LRUCache(const int capacity)
+        : capacity_{static_cast<decltype(capacity_)>(capacity)}
+{
+}
+
+int LRUCache::get(const int key)
+{
+    const auto p = map_.find(key);
+    if (p == std::end(map_)) return not_found;
+
+    const auto node = p->second;
+    bump(node);
+    return node->value;
+}
+
+void LRUCache::put(const int key, const int value)
+{
+    if (!capacity_) return;
+
+    const auto p = map_.find(key);
+
+    if (p != std::end(map_)) {
+        const auto node = p->second;
+        node->value = value;
+        bump(node);
+    }
+    else if (chain_.size() == capacity_) {
+        const auto node = std::prev(std::end(chain_));
+
+        map_.erase(node->key);
+        node->key = key;
+        node->value = value;
+        map_.emplace(key, node);
+
+        bump(node);
+    } else {
+        assert(chain_.size() < capacity_);
+
+        chain_.emplace_front(key, value);
+        map_.emplace(key, chain_.begin());
+    }
+}
+
+constexpr LRUCache::Entry::Entry(const int key, const int value) noexcept
+        : key{key}, value{value}
+{
+}
+
+constexpr int LRUCache::not_found;
+
+void LRUCache::bump(const std::list<Entry>::iterator node)
+{
+    chain_.splice(std::begin(chain_), chain_, node);
+}
+
+namespace {
+    void test_lc_example_ops()
+    {
+        LRUCache cache {2};
+
+        cache.put(1, 1);
+        cache.put(2, 2);
+        std::cout << cache.get(1) << '\n';
+        cache.put(3, 3);
+        std::cout << cache.get(2) << '\n';
+        cache.put(4, 4);
+        std::cout << cache.get(1) << '\n';
+        std::cout << cache.get(3) << '\n';
+        std::cout << cache.get(4) << '\n';
+    }
+
+    void test_more_ops()
+    {
+        auto cache = LRUCache{3};
+
+        cache.put(10, 100);
+        cache.put(20, 200);
+        cache.put(10, 110);
+        cache.put(30, 300);
+        cache.put(20, 220);
+        cache.put(10, 111);
+        cache.put(40, 400);
+        std::cout << cache.get(10) << '\n';
+        std::cout << cache.get(20) << '\n';
+        std::cout << cache.get(30) << '\n';
+        std::cout << cache.get(40) << '\n';
+    }
+}
+
+int main()
+{
+    test_lc_example_ops();
+    std::cout << '\n';
+    test_more_ops();
+}

@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+
+import math
+
+NOT_REACHABLE = -1
+
+def read_record():
+    return map(int, input().split())
+
+# Find out how many vertices and edges there are.
+vertex_count, edge_count = read_record()
+vertex_count += 1 # for 1-based indexing
+vertices = range(vertex_count)
+
+# Initialize the distances matrix.
+distances = [[math.inf] * vertex_count for _ in vertices]
+for i in vertices:
+    distances[i][i] = 0
+
+# Populate the distances matrix with edge information.
+for _ in range(edge_count):
+    src, dest, weight = read_record()
+    if src != dest:
+        # The problem description says that subsequently received parallel
+        # edges replace previous ones, even if their weights are larger.
+        distances[src][dest] = weight
+
+# Perform Floyd-Warshall.
+for via in vertices:
+    for src in vertices:
+        for dest in vertices:
+            new_distance = distances[src][via] + distances[via][dest]
+            if distances[src][dest] > new_distance:
+                distances[src][dest] = new_distance
+
+# Look up answers for each query, reporting infinite distance as NOT_REACHABLE.
+for _ in range(int(input())):
+    src, dest = read_record()
+    distance = distances[src][dest]
+    print(NOT_REACHABLE if distance == math.inf else distance)

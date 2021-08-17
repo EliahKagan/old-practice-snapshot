@@ -1,0 +1,28 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use POSIX qw(ceil);
+use Readonly;
+
+Readonly my $RULER_PIECE => '1234567890';
+
+sub get_ruler {
+    my $width = shift;
+    my $count = ceil($width / length $RULER_PIECE);
+    my $ruler = $RULER_PIECE x $count;
+    return substr($ruler, 0, $width);
+}
+
+print 'Enter alignment width: ';
+my $width = <STDIN>;
+
+say get_ruler($width);
+say 'Please enter a list of strings on separate lines.';
+
+while (<STDIN>) {
+    chomp;
+    printf "%*s\n", $width, $_;
+}

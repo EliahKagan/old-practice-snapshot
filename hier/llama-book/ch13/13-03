@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use autodie;
+use IO::Prompt::Tiny qw(prompt);
+
+my $dirname = prompt 'Where do you want to go?';
+if ($dirname =~ /\A\s*\z/msx) { chdir } else { chdir $dirname }
+
+opendir my $dir, q{.};
+my @filenames = readdir $dir;
+closedir $dir;
+
+for my $name (sort @filenames) { print "$name\n" }

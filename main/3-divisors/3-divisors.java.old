@@ -1,0 +1,21 @@
+final class Solution {
+    private static final int NMAX = 1_000_000_000;
+    
+    private static final int[] properSquares
+            = java.util.stream.IntStream.rangeClosed(2, (int)Math.sqrt(NMAX))
+                                        .map(i -> i * i)
+                                        .toArray();
+    
+    public static void main(final String[] args)
+    {
+        try (final java.util.Scanner sc = new java.util.Scanner(System.in)) {
+            for (int t = sc.nextInt(); t > 0; --t) {
+                final int n = sc.nextInt();
+                final int i = java.util.Arrays.binarySearch(properSquares, n);
+                System.out.println(i < 0 ? ~i : i + 1);
+            }
+        }
+    }
+    
+    private Solution() { } // the Solution class should not be instantiated
+}

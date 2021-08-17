@@ -1,0 +1,3 @@
+declare -a a=()
+read -ra a
+printf '%s\n' "${a[*]}"

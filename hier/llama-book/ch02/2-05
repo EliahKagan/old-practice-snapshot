@@ -1,0 +1,13 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+use 5.010;
+
+print 'String to repeat> ';
+chomp(my $s = <>);
+
+print 'Number of times> ';
+my $n = <>;
+
+print "$s\n" x $n;

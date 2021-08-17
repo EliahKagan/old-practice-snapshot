@@ -1,0 +1,18 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use Const::Fast;
+use English qw(-no_match_vars);
+
+const my $NEED_ARGS => 2;
+
+if (scalar @ARGV != $NEED_ARGS) {
+    my $adjective = (scalar @ARGV < $NEED_ARGS ? 'few' : 'many');
+    die "$PROGRAM_NAME: error: too $adjective arguments\n";
+}
+
+my ($text, $pattern) = @ARGV;
+
+my $i = -1;
+while (($i = index $text, $pattern, $i + 1) != -1) { print "$i\n" }

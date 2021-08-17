@@ -1,0 +1,15 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use 5.010;
+
+use constant RULER_REPS => 7;
+
+say 'Please enter a list of strings on separate lines.';
+say '1234567890' x RULER_REPS;
+
+while (<>) {
+    chomp;
+    printf "%20s\n", $_;
+}

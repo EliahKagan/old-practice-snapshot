@@ -1,0 +1,65 @@
+#ifdef NDEBUG
+#error Runtime assertions are unexpectedly disabled for this build.
+#endif
+
+#include <cassert>
+#include <iostream>
+#include <map>
+#include <string>
+#include <tuple>
+#include <utility>
+
+namespace {
+    using Index = std::string::size_type;
+
+    std::string text;
+
+    bool almost_equal(Index i, const Index j, Index k)
+    {
+        auto found_mismatch = false;
+
+        for (--i, --k; i != j; ++i, ++k) {
+            if (text[i] != text[k]) {
+                if (found_mismatch) return false;
+                found_mismatch = true;
+            }
+        }
+
+        return true;
+    }
+
+    bool query(const Index i, const Index j, const Index k, const Index l)
+    {
+        static std::map<std::tuple<Index, Index, Index>, bool> memo;
+        
+        assert(0 < i && i <= j && j <= text.size());
+        assert(0 < k && k <= l && l <= text.size());
+
+        const auto d = j - i;
+        if (l - k != d) return false;
+
+        const auto ijk = std::make_tuple(i, j, k);
+
+        const auto p = memo.find(ijk);
+        if (p != memo.end()) return p->second;
+
+        const auto result = almost_equal(i, j, k);
+        memo[std::move(ijk)] = result;
+        return result;
+    }
+}
+
+int main()
+{
+    Index n {};
+    std::cin >> n >> std::ws;
+    text.reserve(n);
+    std::getline(std::cin, text);
+
+    auto q = 0;
+    for (std::cin >> q; q > 0; --q) {
+        Index i {}, j {}, k {}, l {};
+        std::cin >> i >> j >> k >> l;
+        std::cout << (query(i, j, k, l) ? "SIMILAR" : "DIFFERENT") << '\n';
+    }
+}

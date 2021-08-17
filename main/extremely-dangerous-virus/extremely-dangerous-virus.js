@@ -1,0 +1,67 @@
+'use strict';
+
+const BASE = 10;
+const HIGH_MULTIPLIER = 4294967296; // 2**32
+
+function Int64(digits) {
+    let lo = 0, hi = 0;
+
+    for (const c of digits) {
+        lo = lo * BASE + Number(c);
+        hi = hi * BASE + Math.floor(lo / HIGH_MULTIPLIER);
+        lo %= HIGH_MULTIPLIER;
+    }
+
+    return { lo, hi };
+}
+
+function isZero(i64) {
+    return i64.lo === 0 && i64.hi === 0;
+}
+
+function isEven(i64) {
+    return i64.lo % 2 === 0;
+}
+
+function half(i64) {
+    return {
+        lo: Math.floor((i64.hi % 2 * HIGH_MULTIPLIER + i64.lo) / 2),
+        hi: Math.floor(i64.hi / 2)
+    };
+}
+
+const M = 1000000007; // 10**9 + 7
+
+function mul(m, n) {
+    {
+        const mn = m * n;
+        if (mn < Number.MAX_SAFE_INTEGER) return mn % M;
+    }
+
+    const h = mul(m, Math.floor(n / 2)), k = h * 2 % M;
+    return n % 2 === 0 ? k : (k + m) % M;
+}
+
+function pow(n, p) {
+    if (isZero(p)) return 1;
+
+    const r = pow(n, half(p)), s = mul(r, r);
+    return isEven(p) ? s : mul(s, n);
+}
+
+function processData(input) {
+    const tok = input.trim().split(' ');
+    const a = Number(tok[0]), b = Number(tok[1]), t = Int64(tok[2]);
+    console.log(pow((a + b) / 2, t));
+}
+
+process.stdin.resume();
+process.stdin.setEncoding("ascii");
+let _input = "";
+process.stdin.on("data", function (input) {
+    _input += input;
+});
+
+process.stdin.on("end", function () {
+    processData(_input);
+});
